@@ -1,17 +1,17 @@
 """First
 
-Revision ID: 8ab995a520aa
+Revision ID: dea2700aee29
 Revises: 
-Create Date: 2023-04-26 16:03:01.048456
+Create Date: 2023-04-27 15:23:32.877697
 
 """
-import sqlmodel
 from alembic import op
 import sqlalchemy as sa
+import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision = '8ab995a520aa'
+revision = 'dea2700aee29'
 down_revision = None
 branch_labels = None
 depends_on = None

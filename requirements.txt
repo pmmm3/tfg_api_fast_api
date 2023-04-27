@@ -6,3 +6,6 @@ pydantic==1.10.7
 sqlmodel==0.0.8
 alembic==1.10.4
 psycopg2-binary
+future>=0.16
+python-dateutil>=2.2
+requests>=2.20
