@@ -1,15 +1,38 @@
+from enum import Enum
+from typing import Optional
+
 from pydantic import EmailStr
-from sqlmodel import Field, SQLModel, Enum
+from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime
 
 from passlib.hash import pbkdf2_sha256
 
 
-# Roles enum for user
+class Token(SQLModel):
+    access_token: str
+
+
 class Role(str, Enum):
     admin = "admin"
     doctor = "doctor"
     patient = "patient"
+
+
+class StatusQuestionnaire(str, Enum):
+    active = "active"
+    inactive = "inactive"
+    draft = "draft"
+    published = "published"
+    archived = "archived"
+
+
+class UserAnswerQuestionnaireLink(SQLModel, table=True):
+    user_id: Optional[int] = Field(
+        default=None, foreign_key="user.id", primary_key=True
+    )
+    questionnaire_id: Optional[int] = Field(
+        default=None, foreign_key="questionnaire.id", primary_key=True
+    )
 
 
 class User(SQLModel, table=True):
@@ -21,7 +44,13 @@ class User(SQLModel, table=True):
     disabled: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    role: Role = Field(default=Role.patient)
+    role: Role = Field(default=Role.patient, index=True)
+    questionnaires_created: list["Questionnaire"] = Relationship(
+        back_populates="created_by"
+    )
+    questionnaires_answered: list["Questionnaire"] = Relationship(
+        back_populates="patients", link_model=UserAnswerQuestionnaireLink
+    )
 
     @staticmethod
     def hash_password(password: str):
@@ -31,6 +60,47 @@ class User(SQLModel, table=True):
         return pbkdf2_sha256.verify(password, self.hashed_password)
 
 
-class LoginParams(SQLModel):
-    email: EmailStr
-    password: str
+class QuestionnaireModuleLink(SQLModel, table=True):
+    questionnaire_id: Optional[int] = Field(
+        default=None, foreign_key="questionnaire.id", primary_key=True
+    )
+    module_id: Optional[int] = Field(
+        default=None, foreign_key="module.id", primary_key=True
+    )
+
+
+class Questionnaire(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    title: str = Field(default=None)
+    description: str = Field(default=None)
+    status: StatusQuestionnaire = Field(default=StatusQuestionnaire.draft)
+    # Relation with User model
+    created_by: int = Field(foreign_key=User.id)
+    doctor: User = Relationship(back_populates="questionnaires_created")
+    patients: list["User"] = Relationship(
+        back_populates="questionnaires_answered", link_model=UserAnswerQuestionnaireLink
+    )
+    modules: list["Module"] = Relationship(
+        back_populates="questionnaires", link_model=QuestionnaireModuleLink
+    )
+
+
+class Module(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    name: str = Field(default=None)
+    description: str = Field(default=None)
+    questionnaires: list["Questionnaire"] = Relationship(
+        back_populates="modules", link_model=QuestionnaireModuleLink
+    )
+    questions: list["Question"] = Relationship(back_populates="module")
+
+
+# TODO: Add dependent question and review attributes
+class Question(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    question: str = Field(default=None)
+    description: str = Field(default=None)
+    module_id: int = Field(foreign_key=Module.id)
+    module: Module = Relationship(back_populates="questions")
+    dependent_question: list["Question"] = Relationship(back_populates="question")

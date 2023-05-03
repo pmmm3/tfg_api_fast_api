@@ -4,11 +4,12 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from src.classes.auth import IncorrectPassword, UserNotFound, Auth
+from src.models import Token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/token")
+@router.post("/token", response_model=Token)
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     try:
         return Auth.login(form_data.username, form_data.password)
