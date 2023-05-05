@@ -21,14 +21,6 @@ class IncorrectPassword(Exception):
 
 class Auth:
     @classmethod
-    def create_user(cls, email, password):
-        hashed_password = User.hash_password(password)
-        user = User(email=email, password=hashed_password)
-        with Session(engine) as session:
-            session.add(user)
-            session.commit()
-
-    @classmethod
     def login(cls, email, password):
         with Session(engine) as session:
             user = session.exec(select(User).where(User.email == email)).first()

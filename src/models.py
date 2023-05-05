@@ -38,10 +38,12 @@ class UserAnswerQuestionnaireLink(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
-    email: EmailStr = Field(index=True)
-    name: str
+    email: EmailStr = Field(
+        index=True, nullable=False, sa_column_kwargs={"unique": True}
+    )
+    name: str = Field(default=None)
     last_name: str = Field(default=None)
-    hashed_password: str
+    hashed_password: str = Field(nullable=False)
     disabled: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
