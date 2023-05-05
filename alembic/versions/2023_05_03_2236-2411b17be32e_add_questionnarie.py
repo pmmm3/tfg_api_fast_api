@@ -12,7 +12,7 @@ import sqlmodel
 
 # revision identifiers, used by Alembic.
 revision = "2411b17be32e"
-down_revision = "e9c13e6c3ecd"
+down_revision = "256a9719cdf4"
 branch_labels = None
 depends_on = None
 
@@ -33,10 +33,6 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.add_column(
-        "user", sa.Column("role", sqlmodel.sql.sqltypes.AutoString(), nullable=True)
-    )
-    op.create_index(op.f("ix_user_role"), "user", ["role"], unique=False)
     # ### end Alembic commands ###
 
 

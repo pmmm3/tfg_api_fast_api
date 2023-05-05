@@ -27,6 +27,7 @@ class StatusQuestionnaire(str, Enum):
 
 
 class UserAnswerQuestionnaireLink(SQLModel, table=True):
+    __tablename__ = "user_answer_questionnaire_link"
     user_id: Optional[int] = Field(
         default=None, foreign_key="user.id", primary_key=True
     )
@@ -94,13 +95,39 @@ class Module(SQLModel, table=True):
         back_populates="modules", link_model=QuestionnaireModuleLink
     )
     questions: list["Question"] = Relationship(back_populates="module")
+    diagnostics: list["Diagnostic"] = Relationship(back_populates="module")
 
 
-# TODO: Add dependent question and review attributes
 class Question(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
-    question: str = Field(default=None)
+    question_text: str = Field(default=None)
     description: str = Field(default=None)
     module_id: int = Field(foreign_key=Module.id)
     module: Module = Relationship(back_populates="questions")
-    dependent_question: list["Question"] = Relationship(back_populates="question")
+    dependent_question_id: Optional[int] = Field(default=None)
+    dependent_response: Optional[str] = Field(default=None)
+    dependent_questions: Optional["Question"] = Relationship(
+        back_populates="parent_question"
+    )
+    parent_questions: list["Question"] = Relationship(
+        back_populates="dependent_question"
+    )
+
+
+class QuestionDependency(SQLModel, table=True):
+    parent_question_id: int = Field(foreign_key=Question.id, primary_key=True)
+    child_question_id: int = Field(foreign_key=Question.id, primary_key=True)
+    answer_required: bool
+    answer_value: Optional[str] = Field(default=None)
+    parent_question: Question = Relationship(back_populates="dependent_questions")
+    child_question: Question = Relationship(back_populates="parent_questions")
+
+
+class Diagnostic(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    questions_ids: list[int] = Field(default=None)
+    quantity: int = Field(default=None)
+    value_question: list[str] = Field(default=None)
+    diagnostic_result: str = Field(default=None)
+    module_id: int = Field(foreign_key=Module.id)
+    module: Module = Relationship(back_populates="diagnostics")
