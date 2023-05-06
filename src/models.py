@@ -54,6 +54,7 @@ class User(SQLModel, table=True):
     questionnaires_answered: list["Questionnaire"] = Relationship(
         back_populates="patients", link_model=UserAnswerQuestionnaireLink
     )
+    token: Optional[str] = Field(default=None)
 
     @staticmethod
     def hash_password(password: str):
@@ -61,6 +62,11 @@ class User(SQLModel, table=True):
 
     def verify_password(self, password: str):
         return pbkdf2_sha256.verify(password, self.hashed_password)
+
+    def create_activation_token(self):
+        """
+        Create a new activation token to send on email
+        """
 
 
 class QuestionnaireModuleLink(SQLModel, table=True):

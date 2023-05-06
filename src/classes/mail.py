@@ -3,6 +3,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 
+from jinja2 import Template
+
 from src.database import smtp_server, smtp_port, smtp_username, smtp_password
 
 
@@ -24,8 +26,7 @@ class EmailManager:
         self,
         to: str,
         subject: str,
-        body: str,
-        link: str = None,
+        content: str,
         attachment_path: str = None,
     ) -> str:
         # Crear el objeto de mensaje multipart para adjuntar el enlace
@@ -34,10 +35,8 @@ class EmailManager:
         message["To"] = to
         message["Subject"] = subject
 
-        # Crear el cuerpo del correo electrónico como texto y adjuntar el enlace (si se proporciona)
-        message.attach(MIMEText(body, "plain"))
-        if link:
-            message.attach(MIMEText(f'<a href="{link}">{link}</a>', "html"))
+        # Añadir el contenido del mensaje
+        message.attach(MIMEText(content, "html"))
 
         # Adjuntar el archivo (si se proporciona)
         if attachment_path:
@@ -55,6 +54,18 @@ class EmailManager:
             server.sendmail(self.smtp_username, to, message.as_string())
 
         return "Correo electrónico enviado"
+
+    async def send_activate_account(self, to: str, token: str = None):
+        # Cargar la plantilla desde el archivo
+        with open("src/templates/activate_account.html", "r") as f:
+            template = Template(f.read())
+
+        # Renderizar la plantilla con los valores personalizados
+        subject = "Activación de cuenta en PsicoSalud"
+        content = template.render()
+
+        # Enviar el correo electrónico
+        await self.send_email(to, subject, content)
 
 
 email_manager = EmailManager(smtp_server, smtp_port, smtp_username, smtp_password)

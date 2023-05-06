@@ -16,4 +16,4 @@ passlib[bcrypt]~=1.7.4
 email-validator
 sqlalchemy==1.4.17
 pytz>=2020.1
-python-dotenv
+python-dotenv==1.0.0
