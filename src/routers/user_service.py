@@ -6,5 +6,5 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 
 @router.post("/send-activate_account")
-def send_activate_account(to: str):
+async def send_activate_account(to: str):
     return await email_manager.send_activate_account(to)
