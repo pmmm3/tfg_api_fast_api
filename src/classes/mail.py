@@ -1,3 +1,4 @@
+import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -62,7 +63,9 @@ class EmailManager:
 
         # Renderizar la plantilla con los valores personalizados
         subject = "Activación de cuenta en PsicoSalud"
-        content = template.render()
+        # Load url from .env
+        url = os.getenv("ACTIVATE_ACCOUNT_URL", "") + f"?token={token}"
+        content = template.render(url=url)
 
         # Enviar el correo electrónico
         await self.send_email(to, subject, content)

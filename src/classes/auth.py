@@ -19,6 +19,13 @@ class IncorrectPassword(Exception):
         super().__init__(self.message)
 
 
+class UserDisabled(Exception):
+    def __init__(self):
+        self.message = "User disabled."
+        self.code = 401
+        super().__init__(self.message)
+
+
 class Auth:
     @classmethod
     def login(cls, email, password):
@@ -28,6 +35,8 @@ class Auth:
                 raise UserNotFound(email)
             if not user.verify_password(password):
                 raise IncorrectPassword()
+            if user.disabled:
+                raise UserDisabled()
             # Crear el token de autenticación
             payload = {"email": user.email}
             token = jwt.encode(payload, "secret", algorithm="HS256")

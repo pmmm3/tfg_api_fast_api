@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional
 
+import jwt
 from pydantic import EmailStr
 from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime
@@ -67,6 +68,7 @@ class User(SQLModel, table=True):
         """
         Create a new activation token to send on email
         """
+        self.token = jwt.encode({"email": self.email}, "secret", algorithm="HS256")
 
 
 class QuestionnaireModuleLink(SQLModel, table=True):
@@ -139,3 +141,10 @@ class Diagnostic(SQLModel, table=True):
     diagnostic_result: str = Field(default=None)
     module_id: int = Field(foreign_key=Module.id)
     module: Module = Relationship(back_populates="diagnostics")
+
+
+class ActivateUserData(SQLModel):
+    token: str = Field(nullable=False)
+    password: str = Field(nullable=False)
+    name: str = Field(default=None)
+    last_name: str = Field(default=None)
