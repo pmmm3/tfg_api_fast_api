@@ -1,0 +1,17 @@
+name: tfg-api
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - fastapi
+  - uvicorn
+  - alembic
+  - sqlmodel
+  - pyjwt
+  - python-dotenv
+  - email-validator
+  - passlib
+  - psycopg2
+  - python-multipart
+  - jinja2
