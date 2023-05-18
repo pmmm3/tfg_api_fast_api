@@ -11,7 +11,7 @@ from alembic import context
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-connection_url = f'postgresql://{DB_USER}:{DB_PWD}@{DB_HOST}:{DB_PORT}/{DB_DEFAULT_DB}'
+connection_url = f"postgresql://{DB_USER}:{DB_PWD}@{DB_HOST}:{DB_PORT}/{DB_DEFAULT_DB}"
 config.set_main_option("sqlalchemy.url", connection_url)
 
 # Interpret the config file for Python logging.

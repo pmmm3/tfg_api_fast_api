@@ -50,7 +50,7 @@ class User(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     role: Role = Field(default=Role.patient, index=True)
     questionnaires_created: list["Questionnaire"] = Relationship(
-        back_populates="created_by"
+        back_populates="doctor"
     )
     questionnaires_answered: list["Questionnaire"] = Relationship(
         back_populates="patients", link_model=UserAnswerQuestionnaireLink
@@ -112,25 +112,8 @@ class Question(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     question_text: str = Field(default=None)
     description: str = Field(default=None)
-    module_id: int = Field(foreign_key=Module.id)
-    module: Module = Relationship(back_populates="questions")
-    dependent_question_id: Optional[int] = Field(default=None)
-    dependent_response: Optional[str] = Field(default=None)
-    dependent_questions: Optional["Question"] = Relationship(
-        back_populates="parent_question"
-    )
-    parent_questions: list["Question"] = Relationship(
-        back_populates="dependent_question"
-    )
-
-
-class QuestionDependency(SQLModel, table=True):
-    parent_question_id: int = Field(foreign_key=Question.id, primary_key=True)
-    child_question_id: int = Field(foreign_key=Question.id, primary_key=True)
-    answer_required: bool
-    answer_value: Optional[str] = Field(default=None)
-    parent_question: Question = Relationship(back_populates="dependent_questions")
-    child_question: Question = Relationship(back_populates="parent_questions")
+    module_id: int = Field(foreign_key="module.id")
+    module: "Module" = Relationship(back_populates="questions")
 
 
 class Diagnostic(SQLModel, table=True):
