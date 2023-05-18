@@ -14,12 +14,13 @@ services:
   db:
     image: postgres
     restart: always
+    env_file: .env
     environment:
-      POSTGRES_USER: pmoreno
-      POSTGRES_PASSWORD: Psiquiatrico1
-      POSTGRES_DB: tfg_pmoreno
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DEFAULT_DB}
     ports:
-      - '5432:5432'
+      - "5432:5432"
     networks:
       - networkName
 
@@ -28,7 +29,7 @@ services:
       context: ../tfg_pwa
       dockerfile: Dockerfile
     ports:
-      - "4200:4200"
+      - "11000:80"
     networks:
       - networkName
 

@@ -18,5 +18,6 @@ SHELL ["conda", "run", "-n", "tfg-api", "/bin/bash", "-c"]
 # Exponer el puerto
 EXPOSE 12000
 
+
 # Comando para iniciar la aplicación
 CMD ["conda", "run", "--no-capture-output", "-n", "tfg-api", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "12000"]
