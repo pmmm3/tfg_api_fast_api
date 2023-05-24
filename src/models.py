@@ -37,18 +37,21 @@ class UserAnswerQuestionnaireLink(SQLModel, table=True):
     )
 
 
-class User(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
+class UserBase(SQLModel):
     email: EmailStr = Field(
         index=True, nullable=False, sa_column_kwargs={"unique": True}
     )
     name: str = Field(default=None)
     last_name: str = Field(default=None)
-    hashed_password: str = Field(nullable=False)
     disabled: bool = False
+    role: Role = Field(default=Role.patient, index=True)
+
+
+class User(UserBase, table=True):
+    id: int = Field(default=None, primary_key=True)
+    hashed_password: str = Field(nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    role: Role = Field(default=Role.patient, index=True)
     questionnaires_created: list["Questionnaire"] = Relationship(
         back_populates="doctor"
     )
@@ -71,6 +74,34 @@ class User(SQLModel, table=True):
         self.token = jwt.encode({"email": self.email}, "secret", algorithm="HS256")
 
 
+class UserInput(UserBase):
+    password: str
+
+
+class UserOutput(UserBase):
+    created_at: datetime
+    updated_at: datetime
+
+
+class QueryFilterSchema(SQLModel):
+    field: str = Field(description="Field name", nullable=False)
+    value: bool | str = Field(description="Value", nullable=False)
+
+
+class ListParams(SQLModel):
+    sort: str = Field(
+        description="Sort by field String with a list of sort fields separated by `|`."
+        "Prepend a `+` or `-` symbol to indicate the sorting method. "
+        "Example:  `+address|-name|-year`",
+        default=None,
+    )
+    page: int = Field(default=0, description="Page number to retrieve. First page is 0")
+    per_page: int = Field(description="Number of items per page. Default is not limit")
+    filters: list[QueryFilterSchema] = Field(
+        description="List of boolean filters to apply to the query", default=None
+    )
+
+
 class QuestionnaireModuleLink(SQLModel, table=True):
     questionnaire_id: Optional[int] = Field(
         default=None, foreign_key="questionnaire.id", primary_key=True
@@ -86,7 +117,7 @@ class Questionnaire(SQLModel, table=True):
     title: str = Field(default=None)
     description: str = Field(default=None)
     status: StatusQuestionnaire = Field(default=StatusQuestionnaire.draft)
-    # Relation with User model
+    # Relation with a User model
     created_by: int = Field(foreign_key=User.id)
     doctor: User = Relationship(back_populates="questionnaires_created")
     patients: list["User"] = Relationship(
@@ -127,7 +158,7 @@ class Diagnostic(SQLModel, table=True):
 
 
 class ActivateUserData(SQLModel):
-    token: str = Field(nullable=False)
-    password: str = Field(nullable=False)
+    token: str = Field(default=None)
+    password: str = Field(default=None)
     name: str = Field(default=None)
     last_name: str = Field(default=None)

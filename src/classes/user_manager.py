@@ -14,12 +14,14 @@ class UserManager:
     ) -> User:
         """
         Create a new user
-        :param email: user email
-        :param password: user password
-        :param name: username
-        :param last_name: user last name
-        :param role: user role
-        :return: None
+
+        Parameters
+        ----------
+        email   :   User email address
+        password: User password
+        name : Username
+        last_name: User last name
+        role: User role
 
         """
         try:
@@ -49,7 +51,8 @@ class UserManager:
         email = jwt.decode(data.token, "secret", algorithms=["HS256"])["email"]
         with Session(engine) as session:
             user = session.exec(select(User).where(User.email == email)).first()
-
+            if user.token != data.token:
+                raise HTTPException(status_code=400, detail="Invalid token")
             if user and user.disabled:
                 user.disabled = False
                 user.name = data.name if data.name else None
@@ -59,3 +62,31 @@ class UserManager:
                 session.add(user)
                 session.commit()
                 return user
+            raise HTTPException(status_code=400, detail="Error activating user")
+
+    @classmethod
+    def update_user(cls, user: User) -> User:
+        with Session(engine) as session:
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return user
+
+    @classmethod
+    def list_users(cls, params):
+        statement = select(User)
+
+        if params.filters:
+            for filter_item in params.filters:
+                if hasattr(User, filter_item.field):
+                    statement = statement.where(
+                        getattr(User, filter_item.field) == filter_item.value
+                    )
+
+        if params.page >= 0 and params.per_page > 0:
+            statement = statement.offset(params.page * params.per_page).limit(
+                params.per_page
+            )
+
+        with Session(engine) as session:
+            return session.exec(statement).all()
