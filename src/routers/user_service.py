@@ -5,15 +5,11 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
 from src.models import (
-    Role,
-    ActivateUserData,
     User,
-    UserInput,
     ListParams,
-    UserOutput,
     UserBase,
 )
-from src.utils.authorization import has_role, get_current_user
+from src.utils.authorization import get_current_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -21,7 +17,7 @@ router = APIRouter(prefix="/user", tags=["user"])
 @router.post("/send-activate_account")
 async def send_activate_account(
     email: Annotated[str, Body(embed=True)],
-    authorized_role: bool = Depends(has_role([Role.admin, Role.doctor])),
+    # authorized_role: bool = Depends(has_role([Role.admin, Role.doctor])),
 ):
     """
     Send email with token to activate user account
@@ -44,15 +40,15 @@ async def send_activate_account(
     raise HTTPException(status_code=400, detail="Email already exists")
 
 
-@router.post("/register", response_model=UserOutput)
-async def register(data: UserInput) -> UserOutput:
+@router.post("/register", response_model=UserBase)
+async def register(data):
     """
     Create a new admin or doctor account
 
     Parameters
     ----------
     data
-        UserInput object with email, password, name, last_name and role fields
+        UserInput object with email, password, name, last_name fields
 
     Returns
     -------
@@ -66,8 +62,8 @@ async def register(data: UserInput) -> UserOutput:
         raise HTTPException(status_code=400, detail="Error while creating user")
 
 
-@router.post("/activate")
-async def activate(data: ActivateUserData) -> UserOutput:
+@router.post("/activate-patient")
+async def activate(data):
     """
     Activate a user account with a token sent to email address when user was created
 
@@ -89,9 +85,7 @@ async def activate(data: ActivateUserData) -> UserOutput:
 
 
 @router.patch("/update")
-async def update_user(
-    user: User, current_user: User = Depends(get_current_user)
-) -> UserOutput:
+async def update_user(user: User, current_user: User = Depends(get_current_user)):
     """
     Update user data.
 
@@ -104,7 +98,7 @@ async def update_user(
         UpdateUser object with updated data.
 
     """
-    if user.id != current_user.id:
+    if user.email != current_user.email:
         raise HTTPException(status_code=403, detail="Forbidden")
     try:
         UserManager.update_user(user)
@@ -112,41 +106,10 @@ async def update_user(
         raise HTTPException(status_code=500, detail=f"Error updating user: {e}")
 
 
-@router.patch("/update/{user_id}")
-async def update_user_by_id(
-    user_id: int, user: User, authorized_role: bool = Depends(has_role([Role.admin]))
-) -> User:
-    """
-    Update user data.
-
-    Parameters
-    ----------
-    user_id
-        User id.
-
-    user
-        UpdateUser object with updated data.
-
-    authorized_role
-        User role
-
-    Returns
-    -------
-    User
-        User object if user was updated successfully
-
-    """
-    if user.role == Role.admin and authorized_role != Role.admin:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    try:
-        return UserManager.update_user(user)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating user: {e}")
-
-
 @router.post("/list", response_model=List[UserBase])
 async def list_users(
-    params: ListParams, authorized_role: bool = Depends(has_role([Role.admin]))
+    params: ListParams,
+    # authorized_role: bool = Depends(has_role([Role.admin]))
 ) -> any:
     """
     List users
