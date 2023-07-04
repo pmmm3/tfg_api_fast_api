@@ -4,21 +4,16 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
-from src.models import (
-    User,
-    ListParams,
-    UserBase,
-)
-from src.utils.authorization import get_current_user
+from src.models import ListParams, UserBase
+from src.utils.authorization import is_doctor, is_admin
 
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.post("/send-activate_account")
-async def send_activate_account(
-    email: Annotated[str, Body(embed=True)],
-    # authorized_role: bool = Depends(has_role([Role.admin, Role.doctor])),
-):
+@router.post(
+    "/send-activate-account", dependencies=[Depends(is_doctor), Depends(is_admin)]
+)
+async def send_activate_account(email: Annotated[str, Body(embed=True)]):
     """
     Send email with token to activate user account
 
@@ -26,8 +21,6 @@ async def send_activate_account(
     ----------
     email
         User email address
-    authorized_role
-        User role
 
     Returns
     -------
@@ -62,54 +55,9 @@ async def register(data):
         raise HTTPException(status_code=400, detail="Error while creating user")
 
 
-@router.post("/activate-patient")
-async def activate(data):
-    """
-    Activate a user account with a token sent to email address when user was created
-
-    Parameters
-    ----------
-    data
-        ActivateUserData object with token, name, last_name and password fields
-
-    Returns
-    -------
-    User
-        User object if user was activated successfully
-
-    """
-    user = UserManager.activate_user(data)
-    if user:
-        return user
-    raise HTTPException(status_code=400, detail="Invalid token")
-
-
-@router.patch("/update")
-async def update_user(user: User, current_user: User = Depends(get_current_user)):
-    """
-    Update user data.
-
-    Parameters
-    ----------
-
-    current_user
-        User object with current user data.
-    user
-        UpdateUser object with updated data.
-
-    """
-    if user.email != current_user.email:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    try:
-        UserManager.update_user(user)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating user: {e}")
-
-
-@router.post("/list", response_model=List[UserBase])
+@router.post("/list", response_model=List[UserBase], dependencies=[Depends(is_admin)])
 async def list_users(
     params: ListParams,
-    # authorized_role: bool = Depends(has_role([Role.admin]))
 ) -> any:
     """
     List users
@@ -118,9 +66,6 @@ async def list_users(
     ----------
     params
         ListParams object with limit, offset and sort fields
-
-    authorized_role
-        User role
 
     Returns
     -------

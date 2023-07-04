@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.11
   - fastapi
   - uvicorn
   - alembic
@@ -15,3 +15,4 @@ dependencies:
   - psycopg2
   - python-multipart
   - jinja2
+  - pydantic<1.10.11

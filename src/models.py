@@ -9,6 +9,8 @@ from datetime import datetime
 
 from passlib.hash import pbkdf2_sha256
 
+from src.settings import Settings
+
 
 class Token(SQLModel):
     access_token: str
@@ -38,6 +40,7 @@ class User(UserBase, table=True):
 
     doctors: Optional[List["Doctor"]] = Relationship(back_populates="user")
     patients: Optional[List["Patient"]] = Relationship(back_populates="user")
+    admins: Optional[List["Admin"]] = Relationship(back_populates="user")
 
     @staticmethod
     def hash_password(password: str):
@@ -50,8 +53,9 @@ class User(UserBase, table=True):
         """
         Create a new activation token to send on email
         """
-        # TODO : Change secret
-        self.token = jwt.encode({"email": self.email}, "secret", algorithm="HS256")
+        self.token = jwt.encode(
+            {"email": self.email}, Settings().token_secret, algorithm="HS256"
+        )
 
 
 class Doctor(SQLModel, table=True):
@@ -60,6 +64,13 @@ class Doctor(SQLModel, table=True):
     )
     user: User = Relationship(back_populates="doctors")
     assignments: Optional[List["Assignment"]] = Relationship(back_populates="doctor")
+
+
+class Admin(SQLModel, table=True):
+    id_user: Optional[EmailStr] = Field(
+        default=None, primary_key=True, foreign_key="user.email"
+    )
+    user: User = Relationship(back_populates="admins")
 
 
 class Patient(SQLModel, table=True):
@@ -157,7 +168,6 @@ class Question(SQLModel, table=True):
         default=None, foreign_key="module.id", primary_key=True
     )
     content: str = Field(default=None)
-
     parent_question: Optional["Question"] = Relationship(
         back_populates="child_questions"
     )

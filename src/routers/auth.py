@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.classes.auth import IncorrectPassword, UserNotFound, Auth, UserDisabled
 from src.models import Token
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 @router.post("/token", response_model=Token)

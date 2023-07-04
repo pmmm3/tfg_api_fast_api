@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.routers.auth import router as auth_router
 from src.routers.user_service import router as user_router
+from src.routers.patient_service import router as patient_router
 
 app = FastAPI()
 
@@ -21,5 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/api")
-app.include_router(user_router, prefix="/api")
+app.include_router(auth_router)
+app.include_router(user_router)
+app.include_router(patient_router)

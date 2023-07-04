@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 
 from src.database import engine
 from src.models import User, Patient
+from src.settings import Settings
 
 
 class UserManager:
@@ -45,11 +46,9 @@ class UserManager:
     @classmethod
     # TODO: Patient
     def activate_user_to_patient(cls, data):
-        # TODO: Check if the model can apply this restriction
-        if not data.token:
-            raise HTTPException(status_code=422, detail="Token is required")
-        # TODO: Change the secret
-        email = jwt.decode(data.token, "secret", algorithms=["HS256"])["email"]
+        email = jwt.decode(data.token, Settings().token_secret, algorithms=["HS256"])[
+            "email"
+        ]
         with Session(engine) as session:
             user = session.exec(select(User).where(User.email == email)).first()
             existing_patient = session.exec(

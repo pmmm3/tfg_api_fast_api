@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 
 from src.database import engine
 from src.models import User
+from src.settings import Settings
 
 
 class UserNotFound(Exception):
@@ -37,7 +38,6 @@ class Auth:
                 raise IncorrectPassword()
             if user.disabled:
                 raise UserDisabled()
-            # Crear el token de autenticación
             payload = {"email": user.email}
-            token = jwt.encode(payload, "secret", algorithm="HS256")
+            token = jwt.encode(payload, Settings().token_secret, algorithm="HS256")
             return {"access_token": token}

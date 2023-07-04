@@ -1,8 +1,8 @@
-"""Refactor db
+"""Add
 
-Revision ID: 4ca50ec33fd3
+Revision ID: b677e8d92013
 Revises:
-Create Date: 2023-06-24 18:56:19.393215
+Create Date: 2023-07-05 00:37:07.549756
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision = "4ca50ec33fd3"
+revision = "b677e8d92013"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -56,6 +56,15 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("token", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.PrimaryKeyConstraint("email"),
+    )
+    op.create_table(
+        "admin",
+        sa.Column("id_user", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["id_user"],
+            ["user.email"],
+        ),
+        sa.PrimaryKeyConstraint("id_user"),
     )
     op.create_table(
         "doctor",
@@ -219,6 +228,7 @@ def downgrade() -> None:
     op.drop_table("patient")
     op.drop_table("module_output_link")
     op.drop_table("doctor")
+    op.drop_table("admin")
     op.drop_table("user")
     op.drop_table("questionnaire")
     op.drop_table("output")

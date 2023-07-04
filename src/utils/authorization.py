@@ -5,7 +5,7 @@ from jwt import InvalidSignatureError, InvalidTokenError
 from sqlmodel import Session, select
 
 from src.database import engine
-from src.models import User, Patient
+from src.models import User, Patient, Doctor, Admin
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
@@ -21,13 +21,56 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-async def get_current_patient(token: str = Depends(oauth2_scheme)) -> Patient:
+async def get_current_patient(user: User = Depends(get_current_user)) -> Patient:
     try:
-        user = await get_current_user(token)
         with Session(engine) as session:
-            patient = session.exec(
+            return session.exec(
                 select(Patient).where(Patient.id_user == user.email)
             ).first()
-            return patient
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid patient")
+
+
+async def get_current_doctor(user: User = Depends(get_current_user)) -> Doctor:
+    try:
+        with Session(engine) as session:
+            return session.exec(
+                select(Doctor).where(Doctor.id_user == user.email)
+            ).first()
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid patient")
+
+
+async def is_doctor(user: User = Depends(get_current_user)):
+    try:
+        with Session(engine) as session:
+            return (
+                session.exec(select(Doctor).where(Doctor.id_user == user.email)).first()
+                is not None
+            )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid patient")
+
+
+async def is_patient(user: User = Depends(get_current_user)):
+    try:
+        with Session(engine) as session:
+            return (
+                session.exec(
+                    select(Patient).where(Patient.id_user == user.email)
+                ).first()
+                is not None
+            )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid patient")
+
+
+async def is_admin(user: User = Depends(get_current_user)):
+    try:
+        with Session(engine) as session:
+            return (
+                session.exec(select(Admin).where(User.email == user.email)).first()
+                is not None
+            )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid admin")
