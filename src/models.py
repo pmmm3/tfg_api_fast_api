@@ -151,29 +151,24 @@ class Module(SQLModel, table=True):
         back_populates="modules", link_model=QuestionnaireModuleLink
     )
 
-    questions: List["Question"] = Relationship(back_populates="module")
+    questions: List["Question"] = Relationship(
+        back_populates="module",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
     outputs: Optional[List["Output"]] = Relationship(
         back_populates="modules", link_model=ModuleOutputLink
     )
 
 
 class Question(SQLModel, table=True):
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["id", "id_module"], ["question.id", "question.id_module"]
-        ),
-    )
     id: Optional[int] = Field(default=None, primary_key=True)
     id_module: Optional[int] = Field(
         default=None, foreign_key="module.id", primary_key=True
     )
     content: str = Field(default=None)
-    parent_question: Optional["Question"] = Relationship(
-        back_populates="child_questions"
-    )
-    child_questions: Optional[List["Question"]] = Relationship(
-        back_populates="parent_question"
-    )
+
+    parent_question_id_question: Optional[int] = Field(default=None, nullable=True)
+    parent_question_id_module: Optional[int] = Field(default=None, nullable=True)
 
     module: Module = Relationship(back_populates="questions")
     options: List["OptionAnswer"] = Relationship(back_populates="question")
@@ -238,6 +233,7 @@ class Answer(SQLModel, table=True):
 
     assignment: Assignment = Relationship(back_populates="answers")
     question: Question = Relationship(back_populates="answers")
+    option: OptionAnswer = Relationship(back_populates="answers")
 
 
 class TypeCondition(str, Enum):
