@@ -4,7 +4,7 @@ from psycopg2 import IntegrityError
 from sqlmodel import Session, select
 
 from src.database import engine
-from src.models import User, Patient, UserRoles, Doctor, Admin
+from src.models import User, Patient, UserRoles, Doctor, Admin, StatusUser
 from src.settings import Settings
 
 
@@ -47,7 +47,7 @@ class UserManager:
                 hashed_password=hashed_password,
                 name=name,
                 last_name=last_name,
-                disabled=True,
+                status=StatusUser.disabled,
             )
             user.create_activation_token()
             with Session(engine) as session:
@@ -71,8 +71,8 @@ class UserManager:
             ).first()
             if user.token != data.token:
                 raise HTTPException(status_code=400, detail="Invalid token")
-            if user and user.disabled and not existing_patient:
-                user.disabled = False
+            if user and user.status == StatusUser.disabled and not existing_patient:
+                user.status = StatusUser.active
                 user.name = data.name if data.name else None
                 user.last_name = data.last_name if data.last_name else None
                 user.hashed_password = User.hash_password(data.password)
@@ -95,32 +95,27 @@ class UserManager:
 
     @classmethod
     def set_user_role(cls, user: User, role: UserRoles):
-        if role == UserRoles.admin:
-            admin = Admin(id_user=user.email)
-            with Session(engine) as session:
-                is_admin = session.exec(
-                    select(Admin).where(Admin.id_user == user.email)
-                ).first()
-                if not is_admin:
-                    session.add(admin)
-                    session.commit()
-                else:
-                    raise HTTPException(
-                        status_code=400, detail="Error setting user role"
-                    )
-        elif role == UserRoles.doctor:
-            doctor = Doctor(id_user=user.email)
-            with Session(engine) as session:
-                is_doctor = session.exec(
-                    select(Doctor).where(Doctor.id_user == user.email)
-                ).first()
-                if not is_doctor:
-                    session.add(doctor)
-                    session.commit()
-                else:
-                    raise HTTPException(
-                        status_code=400, detail="Error setting user role"
-                    )
+        with Session(engine) as session:
+            if role == UserRoles.admin:
+                cls._set_role(session, user, Admin, "admin")
+            elif role == UserRoles.doctor:
+                cls._set_role(session, user, Doctor, "doctor")
+            else:
+                raise HTTPException(status_code=400, detail="Invalid user role")
+
+    @staticmethod
+    def _set_role(session, user, role_model, role_name):
+        user_role = role_model(id_user=user.email)
+        existing_role = session.exec(
+            select(role_model).where(role_model.id_user == user.email)
+        ).first()
+        if not existing_role:
+            session.add(user_role)
+            session.commit()
+        else:
+            raise HTTPException(
+                status_code=400, detail=f"Error setting user role as {role_name}"
+            )
 
     @classmethod
     def update_user(cls, user: User) -> User:

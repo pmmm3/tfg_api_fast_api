@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 from fastapi.testclient import TestClient
 from main import app
-from src.classes.auth import IncorrectPassword, Auth, UserNotFound, UserDisabled
+from src.classes.auth import IncorrectPassword, Auth, UserNotFound, UserNotStatusValid
 
 client = TestClient(app)
 
@@ -51,7 +51,7 @@ def mock_user_disabled():
     mock_user = Mock()
     mock_user.email = "test@example.com"
     mock_user.verify_password.return_value = True
-    mock_user.disabled = True
+    mock_user.status = "disabled"
 
     mock_session = MagicMock()
     mock_session.__enter__.return_value.exec.return_value.first.return_value = mock_user
@@ -86,5 +86,5 @@ def test_login_incorrect_password(mock_user_incorrect_password):
 def test_login_user_disabled(mock_user_disabled):
     email = "test@example.com"
     password = "test_password"
-    with pytest.raises(UserDisabled):
+    with pytest.raises(UserNotStatusValid):
         Auth.login(email, password)

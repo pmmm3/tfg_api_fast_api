@@ -65,7 +65,7 @@ async def register(
     email: Annotated[str, Body(embed=True)], role: UserRoles, _=Depends(is_admin)
 ):
     """
-    Create a new admin or doctor account
+    Admin creates a new admin or doctor account
 
     Parameters
     ----------
@@ -88,6 +88,11 @@ async def register(
         return user
     except Exception:
         raise HTTPException(status_code=400, detail="Error while creating user")
+
+
+@router.post("/request-register")
+async def request_register(email: Annotated[str, Body(embed=True)], role: UserRoles):
+    pass
 
 
 @router.post(

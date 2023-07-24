@@ -24,11 +24,17 @@ class StatusQuestionnaire(str, Enum):
     archived = "archived"
 
 
+class StatusUser(str, Enum):
+    disabled = "disabled"
+    pending = "pending"
+    active = "active"
+
+
 class UserBase(SQLModel):
     email: Optional[EmailStr] = Field(default=None)
     name: Optional[str] = Field(default=None)
     last_name: Optional[str] = Field(default=None)
-    disabled: bool = Field(default=True)
+    status: StatusUser = Field(default=StatusUser.disabled)
 
 
 class UserInput(SQLModel):
