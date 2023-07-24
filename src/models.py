@@ -38,6 +38,12 @@ class UserInput(SQLModel):
     last_name: Optional[str] = Field(description="User last name", nullable=True)
 
 
+class UserRoles(str, Enum):
+    patient = "patient"
+    doctor = "doctor"
+    admin = "admin"
+
+
 class User(UserBase, table=True):
     email: Optional[EmailStr] = Field(default=None, primary_key=True)
     hashed_password: str = Field(nullable=False)

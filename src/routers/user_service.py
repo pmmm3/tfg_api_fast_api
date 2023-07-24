@@ -4,8 +4,8 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
-from src.models import UserBase, ListParams, UserInput
-from src.utils.authorization import is_doctor_or_admin
+from src.models import UserBase, ListParams, UserInput, UserRoles
+from src.utils.authorization import is_doctor_or_admin, is_admin
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -61,14 +61,18 @@ async def activate(data: UserInput):
 
 
 @router.post("/register", response_model=UserBase)
-async def register(data):
+async def register(
+    email: Annotated[str, Body(embed=True)], role: UserRoles, _=Depends(is_admin)
+):
     """
     Create a new admin or doctor account
 
     Parameters
     ----------
-    data
-        UserInput object with email, password, name, last_name fields
+    email
+        User email address
+    role
+        User role (admin or doctor)
 
     Returns
     -------
@@ -77,7 +81,11 @@ async def register(data):
 
     """
     try:
-        return UserManager.create_user(**data.dict())
+        user = UserManager.create_user(email=email, password="temp")
+        if user:
+            UserManager.set_user_role(user, role)
+            await email_manager.send_activate_account(to=user.email, token=user.token)
+        return user
     except Exception:
         raise HTTPException(status_code=400, detail="Error while creating user")
 
