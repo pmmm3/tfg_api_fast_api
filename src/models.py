@@ -31,6 +31,13 @@ class UserBase(SQLModel):
     disabled: bool = Field(default=True)
 
 
+class UserInput(SQLModel):
+    token: str = Field(description="Token to activate user account", nullable=False)
+    password: str = Field(description="User password", nullable=False)
+    name: Optional[str] = Field(description="User name", nullable=True)
+    last_name: Optional[str] = Field(description="User last name", nullable=True)
+
+
 class User(UserBase, table=True):
     email: Optional[EmailStr] = Field(default=None, primary_key=True)
     hashed_password: str = Field(nullable=False)

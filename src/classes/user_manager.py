@@ -44,7 +44,6 @@ class UserManager:
             raise HTTPException(status_code=400, detail=f"Error creating user: {e}")
 
     @classmethod
-    # TODO: Patient
     def activate_user_to_patient(cls, data):
         email = jwt.decode(data.token, Settings().token_secret, algorithms=["HS256"])[
             "email"

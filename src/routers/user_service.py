@@ -4,16 +4,16 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
-from src.models import ListParams, UserBase
-from src.utils.authorization import is_doctor, is_admin
+from src.models import UserBase, ListParams, UserInput
+from src.utils.authorization import is_doctor_or_admin
 
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.post(
-    "/send-activate-account", dependencies=[Depends(is_doctor), Depends(is_admin)]
-)
-async def send_activate_account(email: Annotated[str, Body(embed=True)]):
+@router.post("/send-activate-account")
+async def send_activate_account(
+    email: Annotated[str, Body(embed=True)], _=Depends(is_doctor_or_admin)
+):
     """
     Send email with token to activate user account
 
@@ -31,6 +31,33 @@ async def send_activate_account(email: Annotated[str, Body(embed=True)]):
     if user:
         return await email_manager.send_activate_account(to=email, token=user.token)
     raise HTTPException(status_code=400, detail="Email already exists")
+
+
+@router.post("/activate")
+async def activate(data: UserInput):
+    """
+    Activate a user account with a token sent to email address when user was created
+
+    Parameters
+    ----------
+    data
+        UserInput object with token field and optional email, password, name, last_name fields
+
+    Returns
+    -------
+    User
+        User object if user was activated successfully
+
+    Raises
+    ------
+    HTTPException
+        If token is invalid
+
+    """
+    user = UserManager.activate_user_to_patient(data)
+    if user:
+        return user
+    raise HTTPException(status_code=400, detail="Invalid token")
 
 
 @router.post("/register", response_model=UserBase)
@@ -55,7 +82,9 @@ async def register(data):
         raise HTTPException(status_code=400, detail="Error while creating user")
 
 
-@router.post("/list", response_model=List[UserBase], dependencies=[Depends(is_admin)])
+@router.post(
+    "/list", response_model=List[UserBase], dependencies=[Depends(is_doctor_or_admin)]
+)
 async def list_users(
     params: ListParams,
 ) -> any:
