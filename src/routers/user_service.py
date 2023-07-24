@@ -1,10 +1,10 @@
-from typing import Annotated, List
+from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
-from src.models import UserBase, ListParams, UserInput, UserRoles
+from src.models import UserBase, UserInput, UserRoles
 from src.utils.authorization import is_doctor_or_admin, is_admin
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -90,35 +90,78 @@ async def register(
         raise HTTPException(status_code=400, detail="Error while creating user")
 
 
-@router.post("/request-register")
+@router.post("/request-register", status_code=status.HTTP_201_CREATED)
 async def request_register(email: Annotated[str, Body(embed=True)], role: UserRoles):
-    pass
-
-
-@router.post(
-    "/list", response_model=List[UserBase], dependencies=[Depends(is_doctor_or_admin)]
-)
-async def list_users(
-    params: ListParams,
-) -> any:
     """
-    List users
+    Request admin to create a new admin or doctor account
+    It creates a new user with the status "pending"
 
     Parameters
     ----------
-    params
-        ListParams object with limit, offset and sort fields
+    email
+    role
 
     Returns
     -------
-    list[User]
-        List of users
+        HTTP status code 201 if user was created successfully
+
     """
     try:
-        result = UserManager.list_users(params)
-        users = []
-        for user in result:
-            users.append(UserBase.from_orm(user))
-        return users
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing users: {e}")
+        user = UserManager.create_user(email=email, password="temp", status="pending")
+        if user:
+            UserManager.set_user_role(user, role)
+            return {"message": "User created successfully"}
+    except Exception:
+        raise HTTPException(status_code=400, detail="Error while creating user")
+
+
+@router.post("/activate-pending-user", response_model=UserBase)
+async def activate_pending_user(email: str, _=Depends(is_admin)):
+    """
+    Activate a pending user account
+    Parameters
+    ----------
+    email
+    _
+
+    Returns
+    -------
+    User
+        User object if user was activated successfully
+
+    """
+    user = UserManager.activate_pending_user(email)
+    if user:
+        return user
+    raise HTTPException(
+        status_code=400, detail="Something went wrong while activating user"
+    )
+
+
+# @router.post(
+#     "/list", response_model=List[UserBase], dependencies=[Depends(is_doctor_or_admin)]
+# )
+# async def list_users(
+#     params: ListParams,
+# ) -> any:
+#     """
+#     List users
+#
+#     Parameters
+#     ----------
+#     params
+#         ListParams object with limit, offset and sort fields
+#
+#     Returns
+#     -------
+#     list[User]
+#         List of users
+#     """
+#     try:
+#         result = UserManager.list_users(params)
+#         users = []
+#         for user in result:
+#             users.append(UserBase.from_orm(user))
+#         return users
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error listing users: {e}")

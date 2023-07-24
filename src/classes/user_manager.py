@@ -26,9 +26,45 @@ class UserManager:
             return session.exec(select(User).where(User.email == email)).first()
 
     @classmethod
-    def create_user(cls, email, password=None, name=None, last_name=None) -> User:
+    def activate_pending_user(cls, email: str):
         """
-        Create a new user
+        Activate a pending user
+
+        Parameters
+        ----------
+        email
+            User email address
+
+        Returns
+        -------
+        User
+            User object if user was activated successfully
+
+        Raises
+        ------
+        HTTPException
+            If user is not pending
+        """
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.email == email)).first()
+            if user and user.status == StatusUser.pending:
+                user.status = StatusUser.active
+                session.add(user)
+                session.commit()
+                return user
+            raise HTTPException(status_code=400, detail="User is not pending")
+
+    @classmethod
+    def create_user(
+        cls,
+        email,
+        password="temp",
+        name=None,
+        last_name=None,
+        status=StatusUser.disabled,
+    ) -> User:
+        """
+        Create a new user with email and password and set status to disabled
 
         Parameters
         ----------
@@ -36,20 +72,20 @@ class UserManager:
         password: User password
         name : Username
         last_name: User last name
+        status: User status
 
         """
         try:
-            hashed_password = None
-            if password:
-                hashed_password = User.hash_password(password)
+            hashed_password = User.hash_password(password)
             user = User(
                 email=email,
                 hashed_password=hashed_password,
                 name=name,
                 last_name=last_name,
-                status=StatusUser.disabled,
+                status=status,
             )
-            user.create_activation_token()
+            if status == StatusUser.disabled:
+                user.create_activation_token()
             with Session(engine) as session:
                 session.add(user)
                 session.commit()
