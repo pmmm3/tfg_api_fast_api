@@ -6,8 +6,8 @@ from sqlmodel import Session
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
 from src.database import engine
-from src.models import UserBase, UserInput, UserRoles
-from src.utils.authorization import is_doctor_or_admin, is_admin
+from src.models import UserBase, UserInput, UserRoles, User
+from src.utils.authorization import is_doctor_or_admin, is_admin, get_current_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -165,6 +165,51 @@ async def activate_pending_user(
     raise HTTPException(
         status_code=400, detail="Something went wrong while activating user"
     )
+
+
+@router.get("/is-admin", response_model=bool)
+async def is_admin(
+    user: User = Depends(get_current_user), session: Session = Depends(get_session)
+):
+    """
+    Check if the current user is admin
+    Returns
+    -------
+    bool
+        True if user is admin
+
+    """
+    return UserManager.is_admin(user, session=session)
+
+
+@router.get("/is-doctor", response_model=bool)
+async def is_doctor(
+    user: User = Depends(get_current_user), session: Session = Depends(get_session)
+):
+    """
+    Check if the current user is doctor
+    Returns
+    -------
+    bool
+        True if user is doctor
+
+    """
+    return UserManager.is_doctor(user, session=session)
+
+
+@router.get("/is-patient", response_model=bool)
+async def is_patient(
+    user: User = Depends(get_current_user), session: Session = Depends(get_session)
+):
+    """
+    Check if the current user is patient
+    Returns
+    -------
+    bool
+        True if user is patient
+
+    """
+    return UserManager.is_patient(user, session=session)
 
 
 # @router.post(

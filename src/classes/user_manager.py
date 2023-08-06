@@ -183,3 +183,24 @@ class UserManager:
             )
 
         return session.exec(statement).all()
+
+    @classmethod
+    def is_admin(cls, user: User, *, session):
+        return (
+            session.exec(select(Admin).where(Admin.id_user == user.email)).first()
+            is not None
+        )
+
+    @classmethod
+    def is_doctor(cls, user: User, *, session):
+        return (
+            session.exec(select(Doctor).where(Doctor.id_user == user.email)).first()
+            is not None
+        )
+
+    @classmethod
+    def is_patient(cls, user: User, *, session):
+        return (
+            session.exec(select(Patient).where(Patient.id_user == user.email)).first()
+            is not None
+        )

@@ -9,6 +9,7 @@ app = FastAPI()
 
 # Allow CORS
 origins = [
+    "*",
     "http://localhost",
     "http://localhost:8000",
     "http://localhost:4200",

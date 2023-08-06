@@ -4,8 +4,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidSignatureError, InvalidTokenError
 from sqlmodel import Session, select
 
+from src.classes.user_manager import UserManager
 from src.database import engine
-from src.models import User, Patient, Doctor, Admin
+from src.models import User, Patient, Doctor
 from src.settings import Settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
@@ -45,10 +46,7 @@ async def get_current_doctor(user: User = Depends(get_current_user)) -> Doctor:
 async def is_doctor(user: User = Depends(get_current_user)):
     try:
         with Session(engine) as session:
-            return (
-                session.exec(select(Doctor).where(Doctor.id_user == user.email)).first()
-                is not None
-            )
+            return UserManager().is_doctor(user, session=session)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid patient")
 
@@ -56,12 +54,7 @@ async def is_doctor(user: User = Depends(get_current_user)):
 async def is_patient(user: User = Depends(get_current_user)):
     try:
         with Session(engine) as session:
-            return (
-                session.exec(
-                    select(Patient).where(Patient.id_user == user.email)
-                ).first()
-                is not None
-            )
+            return UserManager().is_patient(user, session=session)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid patient")
 
@@ -69,10 +62,7 @@ async def is_patient(user: User = Depends(get_current_user)):
 async def is_admin(user: User = Depends(get_current_user)):
     try:
         with Session(engine) as session:
-            return (
-                session.exec(select(Admin).where(User.email == user.email)).first()
-                is not None
-            )
+            return UserManager().is_admin(user, session=session)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid admin")
 
