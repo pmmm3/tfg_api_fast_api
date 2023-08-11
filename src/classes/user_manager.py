@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Any
 
 import jwt
 from fastapi import HTTPException
@@ -168,7 +169,20 @@ class UserManager:
         return user
 
     @classmethod
-    def list_users(cls, params: ListParams, *, session) -> dict:
+    def get_role_user(cls, user: User, *, session) -> UserRoles:
+        role_checks = [
+            (cls.is_doctor, UserRoles.doctor),
+            (cls.is_admin, UserRoles.admin),
+            (cls.is_patient, UserRoles.patient),
+        ]
+
+        for check, role in role_checks:
+            if check(user, session=session):
+                return role
+        return UserRoles.user
+
+    @classmethod
+    def list_users(cls, params: ListParams, *, session) -> tuple[Any, int]:
         statement_count = statement = select(User)
         if params:
             if params.filters:
@@ -196,7 +210,7 @@ class UserManager:
 
         return (
             session.exec(statement).all(),
-            len(session.exec(statement_count).all()) / params.per_page,
+            len(session.exec(statement_count).all()),
         )
 
     @classmethod

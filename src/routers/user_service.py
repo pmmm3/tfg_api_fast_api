@@ -6,7 +6,14 @@ from sqlmodel import Session
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
 from src.database import engine
-from src.models import UserBase, UserInput, UserRoles, User, ListParams
+from src.models import (
+    UserBase,
+    UserInput,
+    UserRoles,
+    User,
+    ListParams,
+    UserBaseWithRole,
+)
 from src.utils.authorization import is_doctor_or_admin, is_admin, get_current_user
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -238,7 +245,8 @@ async def list_users(
         result, total = UserManager.list_users(params, session=session)
         users = []
         for user in result:
-            users.append(UserBase.from_orm(user))
+            rol = UserManager.get_role_user(user, session=session)
+            users.append(UserBaseWithRole.from_orm(user, {"rol": rol}))
         return {"users": users, "total": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing users: {e}")

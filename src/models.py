@@ -37,17 +37,22 @@ class UserBase(SQLModel):
     status: StatusUser = Field(default=StatusUser.disabled)
 
 
+class UserRoles(str, Enum):
+    patient = "Paciente"
+    doctor = "Doctor"
+    admin = "Administrador"
+    user = "Usuario"
+
+
+class UserBaseWithRole(UserBase):
+    rol: Optional[UserRoles] = Field(default=UserRoles.user)
+
+
 class UserInput(SQLModel):
     token: str = Field(description="Token to activate user account", nullable=False)
     password: str = Field(description="User password", nullable=False)
     name: Optional[str] = Field(description="User name", nullable=True)
     last_name: Optional[str] = Field(description="User last name", nullable=True)
-
-
-class UserRoles(str, Enum):
-    patient = "patient"
-    doctor = "doctor"
-    admin = "admin"
 
 
 class User(UserBase, table=True):
