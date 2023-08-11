@@ -3,10 +3,11 @@ from functools import partial
 import jwt
 from fastapi import HTTPException
 from psycopg2 import IntegrityError
+from sqlalchemy import desc, asc
 from sqlmodel import Session, select
 
 from src.database import engine
-from src.models import User, Patient, UserRoles, Doctor, Admin, StatusUser
+from src.models import User, Patient, UserRoles, Doctor, Admin, StatusUser, ListParams
 from src.settings import Settings
 
 
@@ -167,22 +168,36 @@ class UserManager:
         return user
 
     @classmethod
-    def list_users(cls, params, *, session):
-        statement = select(User)
+    def list_users(cls, params: ListParams, *, session) -> dict:
+        statement_count = statement = select(User)
+        if params:
+            if params.filters:
+                for filter_item in params.filters:
+                    if hasattr(User, filter_item.field):
+                        statement = statement.where(
+                            getattr(User, filter_item.field) == filter_item.value
+                        )
+            statement_count = statement
 
-        if params.filters:
-            for filter_item in params.filters:
-                if hasattr(User, filter_item.field):
-                    statement = statement.where(
-                        getattr(User, filter_item.field) == filter_item.value
+            if params.page >= 0 and params.per_page > 0:
+                statement = statement.offset(params.page * params.per_page).limit(
+                    params.per_page
+                )
+            if params.sort:
+                descending = params.sort[0] == "-"
+                if descending:
+                    params.sort = params.sort[1:]
+                if hasattr(User, params.sort):
+                    statement = statement.order_by(
+                        desc(getattr(User, params.sort))
+                        if descending
+                        else asc(getattr(User, params.sort))
                     )
 
-        if params.page >= 0 and params.per_page > 0:
-            statement = statement.offset(params.page * params.per_page).limit(
-                params.per_page
-            )
-
-        return session.exec(statement).all()
+        return (
+            session.exec(statement).all(),
+            len(session.exec(statement_count).all()) / params.per_page,
+        )
 
     @classmethod
     def is_admin(cls, user: User, *, session):

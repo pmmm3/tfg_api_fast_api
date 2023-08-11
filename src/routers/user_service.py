@@ -6,7 +6,7 @@ from sqlmodel import Session
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
 from src.database import engine
-from src.models import UserBase, UserInput, UserRoles, User
+from src.models import UserBase, UserInput, UserRoles, User, ListParams
 from src.utils.authorization import is_doctor_or_admin, is_admin, get_current_user
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -212,30 +212,33 @@ async def is_patient(
     return UserManager.is_patient(user, session=session)
 
 
-# @router.post(
-#     "/list", response_model=List[UserBase], dependencies=[Depends(is_doctor_or_admin)]
-# )
-# async def list_users(
-#     params: ListParams,
-# ) -> any:
-#     """
-#     List users
-#
-#     Parameters
-#     ----------
-#     params
-#         ListParams object with limit, offset and sort fields
-#
-#     Returns
-#     -------
-#     list[User]
-#         List of users
-#     """
-#     try:
-#         result = UserManager.list_users(params)
-#         users = []
-#         for user in result:
-#             users.append(UserBase.from_orm(user))
-#         return users
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error listing users: {e}")
+@router.post("/list")
+async def list_users(
+    params: ListParams = None,
+    *,
+    session: Session = Depends(get_session),
+    _=Depends(is_admin),
+) -> dict:
+    """
+    List users
+
+    Parameters
+    ----------
+    params
+        ListParams object with limit, offset and sort fields
+
+    Returns
+    -------
+    list[User]
+        List of users
+    total
+        number of users with the given filters
+    """
+    try:
+        result, total = UserManager.list_users(params, session=session)
+        users = []
+        for user in result:
+            users.append(UserBase.from_orm(user))
+        return {"users": users, "total": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing users: {e}")

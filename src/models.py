@@ -286,7 +286,9 @@ class ListParams(SQLModel):
         default=None,
     )
     page: int = Field(default=0, description="Page number to retrieve. First page is 0")
-    per_page: int = Field(description="Number of items per page. Default is not limit")
+    per_page: int = Field(
+        default=0, description="Number of items per page. Default is not limit"
+    )
     filters: list[QueryFilterSchema] = Field(
         description="List of boolean filters to apply to the query", default=None
     )
