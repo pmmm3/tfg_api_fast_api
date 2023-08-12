@@ -175,7 +175,7 @@ async def activate_pending_user(
 
 
 @router.get("/is-admin", response_model=bool)
-async def is_admin(
+async def is_user_admin(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ):
     """
@@ -190,7 +190,7 @@ async def is_admin(
 
 
 @router.get("/is-doctor", response_model=bool)
-async def is_doctor(
+async def is_user_doctor(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ):
     """
@@ -205,7 +205,7 @@ async def is_doctor(
 
 
 @router.get("/is-patient", response_model=bool)
-async def is_patient(
+async def is_user_patient(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ):
     """
@@ -250,3 +250,30 @@ async def list_users(
         return {"users": users, "total": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing users: {e}")
+
+
+@router.delete("/{user_id}")
+async def delete_user(
+    user_id, *, session: Session = Depends(get_session), _=Depends(is_doctor_or_admin)
+):
+    """
+    Delete user
+    Parameters
+    ----------
+    user_id
+        User email address
+
+    Returns
+    -------
+    Nothing
+    """
+    try:
+        user = UserManager.get_user(user_id, session=session)
+        if not user:
+            raise HTTPException(status_code=400, detail="User not found")
+        UserManager.delete_user(user, session=session)
+        return {"message": "User deleted successfully"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting user: {e}")

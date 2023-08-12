@@ -5,9 +5,8 @@ import jwt
 from fastapi import HTTPException
 from psycopg2 import IntegrityError
 from sqlalchemy import desc, asc
-from sqlmodel import Session, select
+from sqlmodel import select
 
-from src.database import engine
 from src.models import User, Patient, UserRoles, Doctor, Admin, StatusUser, ListParams
 from src.settings import Settings
 
@@ -33,7 +32,7 @@ class UserManager:
         session.commit()
 
     @classmethod
-    def get_user(cls, email: str) -> User:
+    def get_user(cls, email: str, *, session) -> User:
         """
         Get user by email
         Parameters
@@ -45,8 +44,7 @@ class UserManager:
         User
             User object if user exists, None otherwise
         """
-        with Session(engine) as session:
-            return session.exec(select(User).where(User.email == email)).first()
+        return session.exec(select(User).where(User.email == email)).first()
 
     @classmethod
     def activate_pending_user(cls, email: str, *, session):

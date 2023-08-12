@@ -62,9 +62,15 @@ class User(UserBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     token: Optional[str] = Field(default=None)
 
-    doctors: Optional[List["Doctor"]] = Relationship(back_populates="user")
-    patients: Optional[List["Patient"]] = Relationship(back_populates="user")
-    admins: Optional[List["Admin"]] = Relationship(back_populates="user")
+    doctors: Optional[List["Doctor"]] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+    patients: Optional[List["Patient"]] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+    admins: Optional[List["Admin"]] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
 
     @staticmethod
     def hash_password(password: str):
@@ -86,7 +92,10 @@ class Doctor(SQLModel, table=True):
     id_user: Optional[EmailStr] = Field(
         default=None, primary_key=True, foreign_key="user.email"
     )
-    user: User = Relationship(back_populates="doctors")
+    user: User = Relationship(
+        back_populates="doctors",
+        sa_relationship_kwargs={"cascade": "all"},
+    )
     assignments: Optional[List["Assignment"]] = Relationship(back_populates="doctor")
 
 
@@ -94,7 +103,10 @@ class Admin(SQLModel, table=True):
     id_user: Optional[EmailStr] = Field(
         default=None, primary_key=True, foreign_key="user.email"
     )
-    user: User = Relationship(back_populates="admins")
+    user: User = Relationship(
+        sa_relationship_kwargs={"cascade": "all"},
+        back_populates="admins",
+    )
 
 
 class Patient(SQLModel, table=True):
@@ -115,7 +127,10 @@ class Patient(SQLModel, table=True):
     nationality: Optional[str] = Field(default=None)
     birth_date: Optional[datetime] = Field(default=None)
 
-    user: User = Relationship(back_populates="patients")
+    user: User = Relationship(
+        sa_relationship_kwargs={"cascade": "all"},
+        back_populates="patients",
+    )
     assignments: Optional[List["Assignment"]] = Relationship(back_populates="patient")
 
 
