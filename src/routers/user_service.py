@@ -250,3 +250,30 @@ async def list_users(
         return {"users": users, "total": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing users: {e}")
+
+
+@router.delete("/{user_id}")
+async def delete_user(
+    user_id, *, session: Session = Depends(get_session), _=Depends(is_doctor_or_admin)
+):
+    """
+    Delete user
+    Parameters
+    ----------
+    user_id
+        User email address
+
+    Returns
+    -------
+    Nothing
+    """
+    try:
+        user = UserManager.get_user(user_id, session=session)
+        if not user:
+            raise HTTPException(status_code=400, detail="User not found")
+        UserManager.delete_user(user, session=session)
+        return {"message": "User deleted successfully"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting user: {e}")
