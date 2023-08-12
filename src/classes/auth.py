@@ -2,7 +2,8 @@ import jwt
 from sqlmodel import Session, select
 
 from src.database import engine
-from src.models import User
+from src.models import User, StatusUser
+from src.settings import Settings
 
 
 class UserNotFound(Exception):
@@ -19,9 +20,9 @@ class IncorrectPassword(Exception):
         super().__init__(self.message)
 
 
-class UserDisabled(Exception):
+class UserNotStatusValid(Exception):
     def __init__(self):
-        self.message = "User disabled."
+        self.message = "User status is not valid."
         self.code = 401
         super().__init__(self.message)
 
@@ -35,9 +36,8 @@ class Auth:
                 raise UserNotFound(email)
             if not user.verify_password(password):
                 raise IncorrectPassword()
-            if user.disabled:
-                raise UserDisabled()
-            # Crear el token de autenticación
+            if user.status == StatusUser.disabled:
+                raise UserNotStatusValid()
             payload = {"email": user.email}
-            token = jwt.encode(payload, "secret", algorithm="HS256")
+            token = jwt.encode(payload, Settings().token_secret, algorithm="HS256")
             return {"access_token": token}

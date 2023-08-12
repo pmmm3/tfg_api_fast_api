@@ -1,49 +1,71 @@
 import jwt
 from fastapi import HTTPException, Depends
-from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidSignatureError, InvalidTokenError
-from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, select
 
+from src.classes.user_manager import UserManager
 from src.database import engine
-from src.models import User
+from src.models import User, Patient, Doctor
+from src.settings import Settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     try:
-        payload = jwt.decode(token, "secret", algorithms=["HS256"])
+        payload = jwt.decode(token, Settings().token_secret, algorithms=["HS256"])
         email = payload["email"]
         with Session(engine) as session:
             user = session.exec(select(User).where(User.email == email)).first()
             return user
-    except InvalidSignatureError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    except InvalidTokenError:
+    except (InvalidSignatureError, InvalidTokenError):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-# Define the has_role dependency function
-def has_role(allowed_roles=None):
-    if allowed_roles is None:
-        allowed_roles = []
+async def get_current_patient(user: User = Depends(get_current_user)) -> Patient:
+    try:
+        with Session(engine) as session:
+            return session.exec(
+                select(Patient).where(Patient.id_user == user.email)
+            ).first()
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid patient")
 
-    def check_role(credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)):
-        try:
-            # Get the user's email from the token payload
-            payload = jwt.decode(credentials, "secret", algorithms=["HS256"])
-            email = payload["email"]
 
-            # Query the database for the user
-            with Session(engine) as db:
-                user = db.query(User).filter_by(email=email).first()
+async def get_current_doctor(user: User = Depends(get_current_user)) -> Doctor:
+    try:
+        with Session(engine) as session:
+            return session.exec(
+                select(Doctor).where(Doctor.id_user == user.email)
+            ).first()
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid patient")
 
-                # Check if the user has the required role
-                if user.role not in allowed_roles:
-                    raise HTTPException(status_code=403, detail="Not authorized")
-            return True
-        except (InvalidSignatureError, InvalidTokenError, SQLAlchemyError):
-            raise HTTPException(status_code=403, detail="Not authorized")
 
-    return check_role
+async def is_doctor(user: User = Depends(get_current_user)):
+    try:
+        with Session(engine) as session:
+            return UserManager().is_doctor(user, session=session)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid patient")
+
+
+async def is_patient(user: User = Depends(get_current_user)):
+    try:
+        with Session(engine) as session:
+            return UserManager().is_patient(user, session=session)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid patient")
+
+
+async def is_admin(user: User = Depends(get_current_user)):
+    try:
+        with Session(engine) as session:
+            return UserManager().is_admin(user, session=session)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid admin")
+
+
+async def is_doctor_or_admin(user: User = Depends(get_current_user)):
+    return await is_doctor(user) or await is_admin(user)
