@@ -175,7 +175,7 @@ async def activate_pending_user(
 
 
 @router.get("/is-admin", response_model=bool)
-async def is_admin(
+async def is_user_admin(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ):
     """
@@ -190,7 +190,7 @@ async def is_admin(
 
 
 @router.get("/is-doctor", response_model=bool)
-async def is_doctor(
+async def is_user_doctor(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ):
     """
@@ -205,7 +205,7 @@ async def is_doctor(
 
 
 @router.get("/is-patient", response_model=bool)
-async def is_patient(
+async def is_user_patient(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ):
     """
