@@ -26,7 +26,7 @@ class StatusQuestionnaire(str, Enum):
 
 class StatusUser(str, Enum):
     disabled = "disabled"
-    pending = "pending"
+    pending_activate = "pending_activate"
     active = "active"
 
 
@@ -46,6 +46,13 @@ class UserRoles(str, Enum):
 
 class UserBaseWithRole(UserBase):
     rol: Optional[UserRoles] = Field(default=UserRoles.user)
+
+
+class DocOrAdminInput(SQLModel):
+    email: EmailStr = Field(description="User email", nullable=False)
+    name: Optional[str] = Field(description="User name", nullable=True)
+    last_name: Optional[str] = Field(description="User last name", nullable=True)
+    password: str = Field(description="User password", nullable=False)
 
 
 class UserInput(SQLModel):

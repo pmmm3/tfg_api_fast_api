@@ -10,6 +10,13 @@ from sqlmodel import select
 from src.models import User, Patient, UserRoles, Doctor, Admin, StatusUser, ListParams
 from src.settings import Settings
 
+# Create an exception for when a user is not found
+UserNotFound = partial(HTTPException, status_code=404, detail="User not found")
+# Create an exception for when a user is already in the database
+UserAlreadyExists = partial(
+    HTTPException, status_code=400, detail="User already exists"
+)
+
 
 def _set_role(user, role_model, role_name, *, session):
     user_role = role_model(id_user=user.email)
@@ -20,9 +27,7 @@ def _set_role(user, role_model, role_name, *, session):
         session.add(user_role)
         session.commit()
     else:
-        raise HTTPException(
-            status_code=400, detail=f"Error setting user role as {role_name}"
-        )
+        raise UserNotFound()
 
 
 class UserManager:
@@ -67,7 +72,7 @@ class UserManager:
             If user is not pending
         """
         user = session.exec(select(User).where(User.email == email)).first()
-        if user and user.status == StatusUser.pending:
+        if user and user.status == StatusUser.pending_activate:
             user.status = StatusUser.active
             session.add(user)
             session.commit()
@@ -112,7 +117,7 @@ class UserManager:
             session.commit()
             return user
         except IntegrityError:
-            raise HTTPException(status_code=409, detail="Email already exists")
+            raise UserAlreadyExists()
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error creating user: {e}")
 
@@ -231,3 +236,23 @@ class UserManager:
             session.exec(select(Patient).where(Patient.id_user == user.email)).first()
             is not None
         )
+
+    @classmethod
+    def request_activate(cls, data, session):
+        # Check if the user exists
+        user = cls.get_user(data.email, session=session)
+        if user:
+            raise UserAlreadyExists()
+        # Creates the user with the status pending
+        return cls.create_user(
+            email=data.email,
+            password=data.password,
+            name=data.name if data.name else None,
+            last_name=data.last_name if data.last_name else None,
+            status=StatusUser.pending_activate,
+            session=session,
+        )
+
+    @classmethod
+    def get_user_by_token(cls, token, session):
+        return session.exec(select(User).where(User.token == token)).first()

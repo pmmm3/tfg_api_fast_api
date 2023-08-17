@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlmodel import Session
 
+from src.classes.doctor_manager import DoctorManager
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
 from src.database import engine
@@ -13,8 +14,14 @@ from src.models import (
     User,
     ListParams,
     UserBaseWithRole,
+    DocOrAdminInput,
 )
-from src.utils.authorization import is_doctor_or_admin, is_admin, get_current_user
+from src.utils.authorization import (
+    is_doctor_or_admin,
+    is_admin,
+    get_current_user,
+    get_current_doctor,
+)
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -149,6 +156,45 @@ async def request_register(
         raise HTTPException(status_code=400, detail=f"Error while creating user {e}")
 
 
+@router.post("/forgot-password")
+async def restore_password(
+    email: Annotated[str, Body(embed=True)], *, session: Session = Depends(get_session)
+):
+    """
+    Send email with token to restore user password
+    Parameters
+    ----------
+    email
+
+    Returns
+    -------
+    HTTP status code 200 if email was sent successfully
+
+    """
+    user = UserManager.get_user(email, session=session)
+    if user:
+        user.create_activation_token()
+        session.add(user)
+        session.commit()
+        return await email_manager.send_restore_password(to=email, token=user.token)
+    raise HTTPException(status_code=400, detail="Email not found")
+
+
+@router.post("/change-password")
+async def change_password(data: UserInput, *, session: Session = Depends(get_session)):
+    """
+    Change password for a user
+    """
+    user = UserManager.get_user_by_token(data.token, session=session)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    user.hashed_password = user.hash_password(data.password)
+    user.token = None
+    session.add(user)
+    session.commit()
+    return {"message": "Password changed successfully"}
+
+
 @router.post("/activate-pending-user", response_model=UserBase)
 async def activate_pending_user(
     email: str, _=Depends(is_admin), *, session: Session = Depends(get_session)
@@ -277,3 +323,80 @@ async def delete_user(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting user: {e}")
+
+
+@router.get("/list-patients")
+async def list_patients(
+    doc=Depends(get_current_doctor), *, session: Session = Depends(get_session)
+):
+    """
+    List patients
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    list[User]
+        List of users
+    """
+    try:
+        result = DoctorManager.list_patients(doctor=doc, session=session)
+        return {"patients": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing patients: {e}")
+
+
+# TODO: Implementar bien el request delete
+@router.put("/request-delete")
+async def request_delete(
+    email: str,
+    *,
+    session: Session = Depends(get_session),
+    _=Depends(is_doctor_or_admin),
+):
+    """
+    Request admin to delete a user account
+    It changes the user status to "pending-delete"
+
+    Parameters
+    ----------
+    email
+
+    Returns
+    -------
+    HTTP status code 201 if user was created successfully
+
+    """
+    try:
+        user = UserManager.get_user(email=email, session=session)
+        if user:
+            user.status = "pending-delete"
+            session.commit()
+            return {"message": "User deleted successfully"}
+        raise HTTPException(status_code=400, detail="User not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting user: {e}")
+
+
+@router.post("/request-activate", status_code=201)
+async def request_activate(
+    data: DocOrAdminInput, *, session: Session = Depends(get_session)
+):
+    """
+    Request admin to activate a doctor account
+    It creates a new user with the status "pending-activate"
+
+    Parameters
+    ----------
+    data
+        DocOrAdminInput object with email and role fields
+
+    Returns
+    -------
+    HTTP status code 201 if user was created successfully
+
+    """
+    UserManager.request_activate(data, session=session)
+    # Return 201
+    return {"message": "Record saved"}

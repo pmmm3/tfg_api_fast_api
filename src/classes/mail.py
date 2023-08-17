@@ -1,4 +1,3 @@
-import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -7,6 +6,7 @@ from email.mime.application import MIMEApplication
 from jinja2 import Template
 
 from src.database import smtp_server, smtp_port, smtp_username, smtp_password
+from src.settings import FrontURL
 
 
 class EmailManager:
@@ -64,7 +64,23 @@ class EmailManager:
         # Renderizar la plantilla con los valores personalizados
         subject = "Activación de cuenta en PsicoSalud"
         # Load url from .env
-        url = os.getenv("ACTIVATE_ACCOUNT_URL", "") + f"?token={token}"
+        base = FrontURL().ACTIVATE_ACCOUNT_URL
+        url = base + f"?token={token}"
+        content = template.render(url=url)
+
+        # Enviar el correo electrónico
+        await self.send_email(to, subject, content)
+
+    async def send_restore_password(self, to: str, token: str = None):
+        # Cargar la plantilla desde el archivo
+        with open("src/templates/restore_password.html", "r") as f:
+            template = Template(f.read())
+
+        # Renderizar la plantilla con los valores personalizados
+        subject = "Restauración de contraseña en PsicoSalud"
+        # Load url from .env
+        base = FrontURL().RESET_PASSWORD_URL
+        url = base + f"?token={token}"
         content = template.render(url=url)
 
         # Enviar el correo electrónico

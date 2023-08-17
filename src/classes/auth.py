@@ -36,7 +36,7 @@ class Auth:
                 raise UserNotFound(email)
             if not user.verify_password(password):
                 raise IncorrectPassword()
-            if user.status == StatusUser.disabled:
+            if user.status != StatusUser.active:
                 raise UserNotStatusValid()
             payload = {"email": user.email}
             token = jwt.encode(payload, Settings().token_secret, algorithm="HS256")
