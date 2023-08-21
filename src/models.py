@@ -133,12 +133,23 @@ class Patient(SQLModel, table=True):
     native_language: Optional[str] = Field(default=None)
     nationality: Optional[str] = Field(default=None)
     birth_date: Optional[datetime] = Field(default=None)
+    dni: Optional[str] = Field(default=None)
+
+    # If the consent is false, the patient can't be assigned to a questionnaire
+    # If the consent is true, the patient can be assigned to a questionnaire and need to have DNI
 
     user: User = Relationship(
         sa_relationship_kwargs={"cascade": "all"},
         back_populates="patients",
     )
     assignments: Optional[List["Assignment"]] = Relationship(back_populates="patient")
+
+
+class ConsentField(SQLModel):
+    id_patient: EmailStr
+    name: str
+    dni: str
+    last_name: str
 
 
 class QuestionnaireModuleLink(SQLModel, table=True):
