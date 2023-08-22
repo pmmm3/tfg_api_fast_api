@@ -6,7 +6,6 @@ from sqlmodel import Session
 from src.classes.doctor_manager import DoctorManager
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
-from src.database import engine
 from src.models import (
     UserBase,
     UserInput,
@@ -22,13 +21,9 @@ from src.utils.authorization import (
     get_current_user,
     get_current_doctor,
 )
+from src.utils.reuse import get_session
 
 router = APIRouter(prefix="/user", tags=["user"])
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 @router.post("/send-activate-account")
