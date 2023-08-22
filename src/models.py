@@ -145,8 +145,13 @@ class Patient(SQLModel, table=True):
     assignments: Optional[List["Assignment"]] = Relationship(back_populates="patient")
 
 
+class PatientOutput(Patient):
+    email: EmailStr = Field(description="User email", nullable=False)
+    name: Optional[str] = Field(description="User name", nullable=True)
+    last_name: Optional[str] = Field(description="User last name", nullable=True)
+
+
 class ConsentField(SQLModel):
-    id_patient: EmailStr
     name: str
     dni: str
     last_name: str

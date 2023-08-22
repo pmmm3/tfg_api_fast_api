@@ -1,7 +1,7 @@
 from pydantic import EmailStr
 from sqlmodel import Session, select
 
-from src.models import Patient
+from src.models import Patient, PatientOutput, User
 
 
 class PatientManager:
@@ -16,10 +16,10 @@ class PatientManager:
     ) -> Patient:
         patient = session.exec(select(Patient).where(Patient.id_user == id)).first()
         if patient:
-            if name != patient.name:
-                patient.name = name
-            if last_name != patient.last_name:
-                patient.last_name = last_name
+            if name != patient.user.name:
+                patient.user.name = name
+            if last_name != patient.user.last_name:
+                patient.user.last_name = last_name
             patient.dni = dni
             patient.consent = consent
             session.add(patient)
@@ -36,3 +36,18 @@ class PatientManager:
             session.commit()
             session.refresh(patient)
             return patient
+
+    @classmethod
+    def get_patient(cls, id_patient, session: Session) -> PatientOutput:
+        patient = session.exec(
+            select(Patient).where(
+                Patient.id_user == id_patient and User.email == id_patient
+            )
+        ).first()
+        if patient:
+            # Serialize as PatientOutput with the date from user inside the patient
+            data = PatientOutput(**patient.__dict__)
+            data.email = patient.user.email
+            data.name = patient.user.name
+            data.last_name = patient.user.last_name
+            return data
