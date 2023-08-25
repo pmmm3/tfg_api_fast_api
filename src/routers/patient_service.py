@@ -5,7 +5,14 @@ from sqlmodel import Session
 
 from src.classes.patient_manager import PatientManager
 from src.classes.user_manager import UserManager
-from src.models import Patient, Token, ConsentField, User, PatientOutput
+from src.models import (
+    Patient,
+    Token,
+    ConsentField,
+    User,
+    PatientOutput,
+    Questionnaire,
+)
 from src.utils.authorization import (
     get_current_patient,
     get_current_user,
@@ -100,3 +107,33 @@ async def accept_consent(
     if user:
         return user
     raise HTTPException(status_code=400, detail="Invalid token")
+
+
+@router.get("/{id_patient}/questionnaires", response_model=list[Questionnaire])
+async def get_questionnaires(
+    *,
+    id_patient,
+    get_current_patient: Patient = Depends(get_current_patient),
+    session: Session = Depends(get_session)
+):
+    """
+    Get questionnaires of a patient
+
+    Parameters
+    ----------
+    id_patient
+        Patient id
+
+    Returns
+    -------
+    list[Questionnaire]
+
+    """
+    #     Check user is admin or patient
+    if get_current_patient.id_user != id_patient:
+        is_user_admin_or_doctor = UserManager.is_admin(
+            get_current_patient.user, session=session
+        ) or UserManager.is_doctor(get_current_patient.user, session=session)
+        if not is_user_admin_or_doctor:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+    return PatientManager.get_assignemts_questionnaire(id_patient, session=session)
