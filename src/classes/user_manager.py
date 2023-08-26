@@ -178,9 +178,8 @@ class UserManager:
             (cls.is_admin(user, session=session), UserRoles.admin),
             (cls.is_patient(user, session=session), UserRoles.patient),
         ]
-
         for check, role in role_checks:
-            if check(user, session=session):
+            if check:
                 return role
         return UserRoles.user
 
