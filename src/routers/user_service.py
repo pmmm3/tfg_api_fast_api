@@ -2,8 +2,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlmodel import Session
-
-from src.classes.doctor_manager import DoctorManager
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
 from src.models import (
@@ -15,12 +13,7 @@ from src.models import (
     UserBaseWithRole,
     DocOrAdminInput,
 )
-from src.utils.authorization import (
-    is_doctor_or_admin,
-    is_admin,
-    get_current_user,
-    get_current_doctor,
-)
+from src.utils.authorization import is_doctor_or_admin, is_admin, get_current_user
 from src.utils.reuse import get_session
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -318,28 +311,6 @@ async def delete_user(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting user: {e}")
-
-
-@router.get("/list-patients")
-async def list_patients(
-    doc=Depends(get_current_doctor), *, session: Session = Depends(get_session)
-):
-    """
-    List patients
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-    list[User]
-        List of users
-    """
-    try:
-        result = DoctorManager.list_patients(doctor=doc, session=session)
-        return {"patients": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing patients: {e}")
 
 
 # TODO: Implementar bien el request delete

@@ -174,9 +174,9 @@ class UserManager:
     @classmethod
     def get_role_user(cls, user: User, *, session) -> UserRoles:
         role_checks = [
-            (cls.is_doctor, UserRoles.doctor),
-            (cls.is_admin, UserRoles.admin),
-            (cls.is_patient, UserRoles.patient),
+            (cls.is_doctor(user, session=session), UserRoles.doctor),
+            (cls.is_admin(user, session=session), UserRoles.admin),
+            (cls.is_patient(user, session=session), UserRoles.patient),
         ]
 
         for check, role in role_checks:
