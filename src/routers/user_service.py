@@ -22,8 +22,8 @@ router = APIRouter(prefix="/user", tags=["user"])
 @router.post("/send-activate-account")
 async def send_activate_account(
     email: Annotated[str, Body(embed=True)],
-    _=Depends(is_doctor_or_admin),
     *,
+    _=Depends(is_doctor_or_admin),
     session: Session = Depends(get_session),
 ):
     """
@@ -97,9 +97,9 @@ async def register(
 
     """
     try:
-        user = UserManager.create_user(email=email, password="temp", session=session)
+        user = UserManager.get_user(email, session=session)
         if user:
-            UserManager.set_user_role(user, role)
+            UserManager.set_user_role(user, role, session=session)
             await email_manager.send_activate_account(to=user.email, token=user.token)
         return user
     except Exception as e:
@@ -192,7 +192,6 @@ async def activate_pending_user(
     Parameters
     ----------
     email
-    _
 
     Returns
     -------

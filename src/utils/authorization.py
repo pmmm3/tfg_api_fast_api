@@ -71,4 +71,6 @@ async def is_admin(
 async def is_doctor_or_admin(
     user: User = Depends(get_current_user), session: Session = Depends(get_session)
 ):
-    return await is_doctor(user, session) or await is_admin(user, session)
+    return UserManager().is_admin(user, session=session) or UserManager().is_doctor(
+        user, session=session
+    )

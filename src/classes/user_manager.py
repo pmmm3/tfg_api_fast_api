@@ -24,6 +24,8 @@ def _set_role(user, role_model, role_name, *, session):
         select(role_model).where(role_model.id_user == user.email)
     ).first()
     if not existing_role:
+        user.status = StatusUser.active
+        session.add(user)
         session.add(user_role)
         session.commit()
     else:
