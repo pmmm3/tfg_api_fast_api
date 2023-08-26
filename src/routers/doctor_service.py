@@ -25,7 +25,12 @@ async def get_patients(
     """
     if current_doctor.id_user != id_doctor:
         raise HTTPException(status_code=401, detail="Unauthorized")
+    patients = list(
+        dict.fromkeys(
+            [assignment.patient.id_user for assignment in current_doctor.assignments]
+        )
+    )
     return [
-        PatientManager.get_patient(assignment.patient.id_user, session=session)
-        for assignment in current_doctor.assignments
+        PatientManager.get_patient(id_patient, session=session)
+        for id_patient in patients
     ]
