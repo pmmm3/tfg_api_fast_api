@@ -2,8 +2,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlmodel import Session
-
-from src.classes.doctor_manager import DoctorManager
 from src.classes.mail import email_manager
 from src.classes.user_manager import UserManager
 from src.models import (
@@ -15,12 +13,7 @@ from src.models import (
     UserBaseWithRole,
     DocOrAdminInput,
 )
-from src.utils.authorization import (
-    is_doctor_or_admin,
-    is_admin,
-    get_current_user,
-    get_current_doctor,
-)
+from src.utils.authorization import is_doctor_or_admin, is_admin, get_current_user
 from src.utils.reuse import get_session
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -29,8 +22,8 @@ router = APIRouter(prefix="/user", tags=["user"])
 @router.post("/send-activate-account")
 async def send_activate_account(
     email: Annotated[str, Body(embed=True)],
-    _=Depends(is_doctor_or_admin),
     *,
+    _=Depends(is_doctor_or_admin),
     session: Session = Depends(get_session),
 ):
     """
@@ -104,9 +97,9 @@ async def register(
 
     """
     try:
-        user = UserManager.create_user(email=email, password="temp", session=session)
+        user = UserManager.get_user(email, session=session)
         if user:
-            UserManager.set_user_role(user, role)
+            UserManager.set_user_role(user, role, session=session)
             await email_manager.send_activate_account(to=user.email, token=user.token)
         return user
     except Exception as e:
@@ -199,7 +192,6 @@ async def activate_pending_user(
     Parameters
     ----------
     email
-    _
 
     Returns
     -------
@@ -318,28 +310,6 @@ async def delete_user(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting user: {e}")
-
-
-@router.get("/list-patients")
-async def list_patients(
-    doc=Depends(get_current_doctor), *, session: Session = Depends(get_session)
-):
-    """
-    List patients
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-    list[User]
-        List of users
-    """
-    try:
-        result = DoctorManager.list_patients(doctor=doc, session=session)
-        return {"patients": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing patients: {e}")
 
 
 # TODO: Implementar bien el request delete

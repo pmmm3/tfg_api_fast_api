@@ -38,12 +38,16 @@ class PatientManager:
             return patient
 
     @classmethod
-    def get_patient(cls, id_patient, session: Session) -> PatientOutput:
-        patient = session.exec(
+    def get_patient(cls, id_patient, session: Session) -> Patient:
+        return session.exec(
             select(Patient).where(
                 Patient.id_user == id_patient and User.email == id_patient
             )
         ).first()
+
+    @classmethod
+    def get_patient_output(cls, id_patient, session: Session) -> PatientOutput:
+        patient = cls.get_patient(id_patient, session=session)
         if patient:
             # Serialize as PatientOutput with the date from user inside the patient
             data = PatientOutput(**patient.__dict__)

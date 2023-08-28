@@ -171,8 +171,8 @@ class Questionnaire(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: Optional[str] = Field(default=None)
     description: Optional[str] = Field(default=None)
-    status: Optional[StatusQuestionnaire] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional[EmailStr] = Field(default=None, foreign_key="user.email")
 
     modules: List["Module"] = Relationship(
         back_populates="questionnaires", link_model=QuestionnaireModuleLink
@@ -248,6 +248,7 @@ class Assignment(SQLModel, table=True):
         default=None, foreign_key="questionnaire.id"
     )
     date: datetime = Field(default_factory=datetime.utcnow)
+    status: Optional[StatusQuestionnaire] = Field(default=None)
 
     doctor: Doctor = Relationship(back_populates="assignments")
     patient: Patient = Relationship(back_populates="assignments")

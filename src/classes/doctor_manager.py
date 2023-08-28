@@ -33,3 +33,23 @@ class DoctorManager:
         for assignment in assignments:
             patients.append(assignment.patient)
         return patients
+
+    @staticmethod
+    def get_doctor(id_doctor: str, session: Session) -> Doctor:
+        """
+        Get doctor by id
+
+        Parameters
+        ----------
+        id_doctor : str
+            Doctor id
+        session : Session
+            SQLAlchemy session
+
+        Returns
+        -------
+        Doctor
+            Doctor object if found, None otherwise
+
+        """
+        return session.exec(select(Doctor).where(Doctor.id_user == id_doctor)).first()

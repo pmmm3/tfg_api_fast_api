@@ -24,6 +24,8 @@ def _set_role(user, role_model, role_name, *, session):
         select(role_model).where(role_model.id_user == user.email)
     ).first()
     if not existing_role:
+        user.status = StatusUser.active
+        session.add(user)
         session.add(user_role)
         session.commit()
     else:
@@ -174,13 +176,12 @@ class UserManager:
     @classmethod
     def get_role_user(cls, user: User, *, session) -> UserRoles:
         role_checks = [
-            (cls.is_doctor, UserRoles.doctor),
-            (cls.is_admin, UserRoles.admin),
-            (cls.is_patient, UserRoles.patient),
+            (cls.is_doctor(user, session=session), UserRoles.doctor),
+            (cls.is_admin(user, session=session), UserRoles.admin),
+            (cls.is_patient(user, session=session), UserRoles.patient),
         ]
-
         for check, role in role_checks:
-            if check(user, session=session):
+            if check:
                 return role
         return UserRoles.user
 
