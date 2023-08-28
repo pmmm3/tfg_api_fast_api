@@ -18,7 +18,7 @@ class ModuleOutput(BaseModel):
 
 class ModuleManager:
     @classmethod
-    def get_module(cls, id_module: str, *, session) -> Module:
+    def get_module(cls, id_module: int, *, session) -> Module:
         """
         Get module by id
         Parameters

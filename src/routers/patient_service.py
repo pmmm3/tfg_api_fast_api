@@ -47,7 +47,7 @@ async def get_patient(
         is_user_admin = UserManager.is_admin(current_user, session=session)
         if not is_user_admin:
             raise HTTPException(status_code=401, detail="Unauthorized")
-    return PatientManager.get_patient(id_patient, session=session)
+    return PatientManager.get_patient_output(id_patient, session=session)
 
 
 @router.post("/activate")
@@ -109,6 +109,7 @@ async def accept_consent(
     raise HTTPException(status_code=400, detail="Invalid token")
 
 
+# TODO: Questionnaire with assignment status
 @router.get("/{id_patient}/questionnaires", response_model=list[Questionnaire])
 async def get_questionnaires(
     *,

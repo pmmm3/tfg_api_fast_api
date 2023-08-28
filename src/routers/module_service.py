@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends
 
 from src.classes.modules_manager import ModuleNotFound, ModuleManager
+from src.utils.authorization import is_doctor_or_admin
 from src.utils.reuse import get_session
 
 router = APIRouter(prefix="/module", tags=["Modulos"])
 
 
 @router.get("/{id_module}")
-async def get_module(id_module: str, session=Depends(get_session)):
+async def get_module(id_module: int, session=Depends(get_session)):
     """
     Get a module by id
 
@@ -32,11 +33,13 @@ async def get_module(id_module: str, session=Depends(get_session)):
     raise ModuleNotFound()
 
 
-# Get all modules endpoint
 @router.get("/")
-async def get_modules(session=Depends(get_session)):
+async def get_modules(
+    session=Depends(get_session), is_admin_or_doctor=Depends(is_doctor_or_admin)
+):
     """
     Get all-modules
+
     Returns
     -------
     list[Module]

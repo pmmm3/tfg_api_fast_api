@@ -31,6 +31,6 @@ async def get_patients(
         )
     )
     return [
-        PatientManager.get_patient(id_patient, session=session)
+        PatientManager.get_patient_output(id_patient, session=session)
         for id_patient in patients
     ]
