@@ -22,6 +22,21 @@ from src.utils.reuse import get_session
 router = APIRouter(prefix="/patient", tags=["patient"])
 
 
+#  Can not put / in the path because it will be interpreted as a path parameter and will not work
+@router.get("/consent")
+async def get_accepted(current_patient: Patient = Depends(get_current_patient)):
+    """
+    Check if a patient has accepted consent
+
+    Returns
+    -------
+    bool
+        True if patient has accepted consent
+
+    """
+    return current_patient.consent if current_patient.consent else False
+
+
 @router.get("/{id_patient}", response_model=PatientOutput)
 async def get_patient(
     id_patient: str,
@@ -70,22 +85,6 @@ async def activate(token: Token, *, session: Session = Depends(get_session)):
     if user:
         return user
     raise HTTPException(status_code=400, detail="Invalid token")
-
-
-# Todo: Broken for no reason
-# @router.get("/is-consent-accepted")
-# async def get_accepted(*, current_patient: Patient = Depends(get_current_patient)):
-#     """
-#     Check if a patient has accepted consent
-#
-#     Returns
-#     -------
-#     bool
-#         True if patient has accepted consent
-#
-#     """
-#     return current_patient.consent
-#
 
 
 @router.post("/{id_patient}/accept-consent")

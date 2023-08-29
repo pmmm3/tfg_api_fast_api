@@ -12,16 +12,9 @@ from src.routers.assignment_service import router as assignments_router
 app = FastAPI()
 
 # Allow CORS
-origins = [
-    "*",
-    "http://localhost",
-    "http://localhost:8000",
-    "http://localhost:4200",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
