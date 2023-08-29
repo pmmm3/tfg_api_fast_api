@@ -50,3 +50,14 @@ async def create_questionnaire(
         author=current_user.email,
         session=session,
     )
+
+
+@router.get("/{id_questionnaire}")
+async def get_questionnaire(
+    id_questionnaire: int,
+    session=Depends(get_session),
+    get_current_user=Depends(get_current_user),
+):
+    return QuestionnaireManager.get_questionnaire(
+        id_questionnaire=id_questionnaire, session=session
+    )

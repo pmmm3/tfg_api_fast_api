@@ -11,7 +11,7 @@ from src.models import (
     ConsentField,
     User,
     PatientOutput,
-    QuestionnaireStatus,
+    Assignment,
 )
 from src.utils.authorization import (
     get_current_patient,
@@ -124,8 +124,7 @@ async def accept_consent(
     raise HTTPException(status_code=400, detail="Invalid token")
 
 
-# TODO: Questionnaire with assignment status
-@router.get("/{id_patient}/questionnaires", response_model=list[QuestionnaireStatus])
+@router.get("/{id_patient}/assignments", response_model=list[Assignment])
 async def get_questionnaires(
     *,
     id_patient,
@@ -152,4 +151,4 @@ async def get_questionnaires(
         ) or UserManager.is_doctor(get_current_patient.user, session=session)
         if not is_user_admin_or_doctor:
             raise HTTPException(status_code=401, detail="Unauthorized")
-    return PatientManager.get_assignemts_questionnaire(id_patient, session=session)
+    return PatientManager.get_assignments(id_patient, session=session)
