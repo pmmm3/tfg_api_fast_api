@@ -56,3 +56,27 @@ async def create_assignment(
     return AssignmentManager.create_assignment(
         patient=patient, doctor=doctor, questionnaire=questionnaire, session=session
     )
+
+
+@router.get("/{id_assignment}")
+async def get_assignment(
+    id_assignment: int,
+    session=Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get an assignment by id
+    """
+    #     Check user is admin
+    have_access = UserManager.is_admin(current_user, session=session)
+    if not have_access:
+        # Check is related to the assignment
+        assignment = AssignmentManager.get_assignment(id_assignment, session=session)
+        if (
+            current_user.email != assignment.doctor.id_user
+            and current_user.email != assignment.patient.id_user
+        ):
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=401, detail="Unauthorized")
+    return AssignmentManager.get_assignment(id_assignment, session=session)

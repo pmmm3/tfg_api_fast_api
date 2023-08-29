@@ -152,3 +152,25 @@ async def get_questionnaires(
         if not is_user_admin_or_doctor:
             raise HTTPException(status_code=401, detail="Unauthorized")
     return PatientManager.get_assignments(id_patient, session=session)
+
+
+@router.get("/has-assignment/{id_assignment}", response_model=bool)
+async def has_assignment(
+    *, id_assignment: int, get_current_patient: Patient = Depends(get_current_patient)
+):
+    """
+    Check if a current patient has an assignment
+
+    Parameters
+    ----------
+    id_assignment
+        Assignment id
+
+    Returns
+    -------
+    bool
+        True if patient has an assignment
+
+    """
+    ids_assignments = [assignment.id for assignment in get_current_patient.assignments]
+    return id_assignment in ids_assignments
