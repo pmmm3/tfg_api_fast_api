@@ -26,3 +26,7 @@ class AssignmentManager:
         session.commit()
         session.refresh(assignment)
         return assignment
+
+    @classmethod
+    def get_status(cls, assignment: Assignment) -> str:
+        return assignment.status

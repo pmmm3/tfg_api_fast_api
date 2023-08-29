@@ -1,7 +1,12 @@
 from pydantic import EmailStr
 from sqlmodel import Session, select
 
-from src.models import Patient, PatientOutput, User, Questionnaire
+from src.models import (
+    Patient,
+    PatientOutput,
+    User,
+    QuestionnaireStatus,
+)
 
 
 class PatientManager:
@@ -57,10 +62,17 @@ class PatientManager:
             return data
 
     @classmethod
-    def get_assignemts_questionnaire(cls, id_patient, session) -> list[Questionnaire]:
+    def get_assignemts_questionnaire(
+        cls, id_patient, session
+    ) -> list[QuestionnaireStatus]:
         patient = session.exec(
             select(Patient).where(Patient.id_user == id_patient)
         ).first()
         if patient:
-            return [assignment.questionnaire for assignment in patient.assignments]
+            return [
+                QuestionnaireStatus(
+                    questionnaire=assignment.questionnaire, status=assignment.status
+                )
+                for assignment in patient.assignments
+            ]
         return []

@@ -11,7 +11,7 @@ from src.models import (
     ConsentField,
     User,
     PatientOutput,
-    Questionnaire,
+    QuestionnaireStatus,
 )
 from src.utils.authorization import (
     get_current_patient,
@@ -51,7 +51,7 @@ async def get_patient(
 
 
 @router.post("/activate")
-async def activate(token: Token):
+async def activate(token: Token, *, session: Session = Depends(get_session)):
     """
     Activate a user account with a token sent to email address when user was created
 
@@ -66,10 +66,26 @@ async def activate(token: Token):
         User object if user was activated successfully
 
     """
-    user = UserManager.activate_user_to_patient(token.access_token)
+    user = UserManager.activate_user_to_patient(token.access_token, session=session)
     if user:
         return user
     raise HTTPException(status_code=400, detail="Invalid token")
+
+
+# Todo: Broken for no reason
+# @router.get("/is-consent-accepted")
+# async def get_accepted(*, current_patient: Patient = Depends(get_current_patient)):
+#     """
+#     Check if a patient has accepted consent
+#
+#     Returns
+#     -------
+#     bool
+#         True if patient has accepted consent
+#
+#     """
+#     return current_patient.consent
+#
 
 
 @router.post("/{id_patient}/accept-consent")
@@ -110,7 +126,7 @@ async def accept_consent(
 
 
 # TODO: Questionnaire with assignment status
-@router.get("/{id_patient}/questionnaires", response_model=list[Questionnaire])
+@router.get("/{id_patient}/questionnaires", response_model=list[QuestionnaireStatus])
 async def get_questionnaires(
     *,
     id_patient,

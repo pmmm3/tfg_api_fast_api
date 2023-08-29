@@ -336,3 +336,8 @@ class ListParams(SQLModel):
     filters: list[QueryFilterSchema] = Field(
         description="List of boolean filters to apply to the query", default=None
     )
+
+
+class QuestionnaireStatus(SQLModel):
+    questionnaire: Questionnaire
+    status: StatusQuestionnaire = Field(default=None)
