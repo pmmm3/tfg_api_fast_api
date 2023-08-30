@@ -8,6 +8,7 @@ from src.routers.doctor_service import router as doctor_router
 from src.routers.module_service import router as module_router
 from src.routers.questionnaire_service import router as questionnaire_router
 from src.routers.assignment_service import router as assignments_router
+from src.routers.question_service import router as question_router
 
 app = FastAPI()
 
@@ -27,3 +28,4 @@ app.include_router(doctor_router)
 app.include_router(module_router)
 app.include_router(questionnaire_router)
 app.include_router(assignments_router)
+app.include_router(question_router)

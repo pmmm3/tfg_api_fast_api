@@ -4,7 +4,7 @@ from src.classes.modules_manager import ModuleManager, ModuleNotFound
 from src.utils.authorization import is_doctor_or_admin
 from src.utils.reuse import get_session
 
-router = APIRouter(prefix="/module", tags=["Modulos"])
+router = APIRouter(prefix="/module", tags=["Modules"])
 
 
 @router.get("/")
