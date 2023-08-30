@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 
 from src.models import Question
 
@@ -9,6 +9,11 @@ class QuestionType(str, Enum):
     YN = "YesNo"
     MULTIPLE = "multiple"
     TEXT = "text"
+
+
+class QuestionOption(SQLModel):
+    type_opt: QuestionType
+    options: list[str] or None
 
 
 class QuestionManager:
@@ -29,16 +34,19 @@ class QuestionManager:
         ).all()
 
     @classmethod
-    def get_question_type(
+    def get_question_options(
         cls, id_question: int, id_module: int, session: Session
-    ) -> QuestionType or None:
+    ) -> QuestionOption or None:
         question = cls.get_question(id_question, id_module, session=session)
         if question:
             options = question.options
+            if options:
+                options = [option.content for option in options]
+            type_opt = QuestionType.TEXT
             if len(options) == 2:
-                return QuestionType.YN
+                type_opt = QuestionType.YN
             elif len(options) > 2:
-                return QuestionType.MULTIPLE
-            return QuestionType.TEXT
+                type_opt = QuestionType.MULTIPLE
+            return QuestionOption(type_opt=type_opt, options=options)
         else:
             return None

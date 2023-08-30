@@ -10,4 +10,4 @@ router = APIRouter(prefix="/question", tags=["Question"])
 async def get_question_type(
     id_question: int, id_module: int, session=Depends(get_session)
 ):
-    return QuestionManager.get_question_type(id_question, id_module, session=session)
+    return QuestionManager.get_question_options(id_question, id_module, session=session)
