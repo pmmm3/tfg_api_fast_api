@@ -345,3 +345,11 @@ class ListParams(SQLModel):
 class QuestionnaireStatus(SQLModel):
     questionnaire: Questionnaire
     status: StatusQuestionnaire = Field(default=None)
+
+
+class BaronaInput(SQLModel):
+    gender: int
+    age: datetime
+    education_level: int
+    region: int
+    zone: int

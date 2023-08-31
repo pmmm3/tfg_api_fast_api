@@ -109,6 +109,7 @@ class PatientManager:
                 patient.has_ci_barona = True
                 patient.ci_barona = ci
                 session.add(patient)
+                session.commit()
         return None
 
 

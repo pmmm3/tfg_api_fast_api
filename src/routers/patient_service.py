@@ -13,6 +13,7 @@ from src.models import (
     User,
     PatientOutput,
     Assignment,
+    BaronaInput,
 )
 from src.utils.authorization import (
     get_current_patient,
@@ -146,6 +147,41 @@ async def accept_consent(
     if user:
         return user
     raise HTTPException(status_code=400, detail="Invalid token")
+
+
+@router.post("/{id_patient}/barona")
+async def calculate_barona(
+    id_patient,
+    data: BaronaInput,
+    current_patient=Depends(get_current_patient),
+    session: Session = Depends(get_session),
+):
+    """
+    Calculate barona score of a patient
+
+    Parameters
+    ----------
+    id_patient
+        Patient id
+
+    data
+        BaronaInput object with gender, age, education_level, region and zone fields
+
+    """
+    #     Check user is admin or patient
+    if current_patient.id_user != id_patient:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    patient = PatientManager.get_patient(id_patient, session=session)
+    patient.gender = data.gender
+    patient.birth_date = data.age
+    patient.education_level = data.education_level
+    patient.region = data.region
+    patient.zone = data.zone
+    session.add(patient)
+    session.commit()
+
+    return PatientManager.get_ci_barona(id_patient, session=session)
 
 
 @router.get("/{id_patient}/assignments", response_model=list[Assignment])
