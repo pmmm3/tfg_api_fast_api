@@ -286,10 +286,11 @@ class Answer(SQLModel, table=True):
             ["question.id", "question.id_module"],
         ),
     )
-    id: Optional[int] = Field(default=None, primary_key=True)
-    id_assignment: Optional[int] = Field(default=None, foreign_key="assignment.id")
-    id_question_question_id: Optional[int] = Field(default=None)
-    id_question_module_id: Optional[int] = Field(default=None)
+    id_assignment: Optional[int] = Field(
+        default=None, foreign_key="assignment.id", primary_key=True
+    )
+    id_question_question_id: Optional[int] = Field(default=None, primary_key=True)
+    id_question_module_id: Optional[int] = Field(default=None, primary_key=True)
     id_option: Optional[int] = Field(default=None, foreign_key="option_answer.id")
     open_answer: Optional[str] = Field(default=None)
     date: datetime = Field(default_factory=datetime.utcnow)

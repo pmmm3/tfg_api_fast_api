@@ -2,7 +2,7 @@ from enum import Enum
 
 from sqlmodel import Session, select, SQLModel
 
-from src.models import Question
+from src.models import Question, OptionAnswer
 
 
 class QuestionType(str, Enum):
@@ -13,7 +13,7 @@ class QuestionType(str, Enum):
 
 class QuestionOption(SQLModel):
     type_opt: QuestionType
-    options: list[str] or None
+    options: list[OptionAnswer] or None
 
 
 class QuestionManager:
@@ -40,8 +40,6 @@ class QuestionManager:
         question = cls.get_question(id_question, id_module, session=session)
         if question:
             options = question.options
-            if options:
-                options = [option.content for option in options]
             type_opt = QuestionType.TEXT
             if len(options) == 2:
                 type_opt = QuestionType.YN
