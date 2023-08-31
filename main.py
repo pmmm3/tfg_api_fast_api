@@ -8,20 +8,15 @@ from src.routers.doctor_service import router as doctor_router
 from src.routers.module_service import router as module_router
 from src.routers.questionnaire_service import router as questionnaire_router
 from src.routers.assignment_service import router as assignments_router
+from src.routers.question_service import router as question_router
+from src.routers.answer_service import router as answer_router
 
 app = FastAPI()
 
 # Allow CORS
-origins = [
-    "*",
-    "http://localhost",
-    "http://localhost:8000",
-    "http://localhost:4200",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,3 +29,5 @@ app.include_router(doctor_router)
 app.include_router(module_router)
 app.include_router(questionnaire_router)
 app.include_router(assignments_router)
+app.include_router(question_router)
+app.include_router(answer_router)

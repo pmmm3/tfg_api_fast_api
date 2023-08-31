@@ -44,7 +44,7 @@ class ModuleManager:
         return session.exec(select(Module)).all()
 
     @classmethod
-    def get_module_with_questions(cls, id_module, *, session) -> ModuleOutput:
+    def get_module_with_questions(cls, id_module, *, session) -> list[Question]:
         """
         Get module with questions
 
@@ -55,8 +55,8 @@ class ModuleManager:
 
         Returns
         -------
-        ModuleOutput
-            Module object with questions
+        Question list
+            questions
 
         Raises
         ------
@@ -67,18 +67,8 @@ class ModuleManager:
 
         if module:
             # Fetch the associated questions for the module
-            questions = session.exec(
+            return session.exec(
                 select(Question).where(Question.id_module == id_module)
             ).all()
-
-            # Create a ModuleOutput instance with the retrieved module attributes and questions
-            module_output = ModuleOutput(
-                id=module.id,
-                title=module.title,
-                description=module.description,
-                questions_list=questions,
-            )
-
-            return module_output
 
         raise ModuleNotFound()

@@ -11,7 +11,7 @@ from src.models import (
     ConsentField,
     User,
     PatientOutput,
-    Questionnaire,
+    Assignment,
 )
 from src.utils.authorization import (
     get_current_patient,
@@ -20,6 +20,21 @@ from src.utils.authorization import (
 from src.utils.reuse import get_session
 
 router = APIRouter(prefix="/patient", tags=["patient"])
+
+
+#  Can not put / in the path because it will be interpreted as a path parameter and will not work
+@router.get("/consent")
+async def get_accepted(current_patient: Patient = Depends(get_current_patient)):
+    """
+    Check if a patient has accepted consent
+
+    Returns
+    -------
+    bool
+        True if patient has accepted consent
+
+    """
+    return current_patient.consent if current_patient.consent else False
 
 
 @router.get("/{id_patient}", response_model=PatientOutput)
@@ -51,7 +66,7 @@ async def get_patient(
 
 
 @router.post("/activate")
-async def activate(token: Token):
+async def activate(token: Token, *, session: Session = Depends(get_session)):
     """
     Activate a user account with a token sent to email address when user was created
 
@@ -66,7 +81,7 @@ async def activate(token: Token):
         User object if user was activated successfully
 
     """
-    user = UserManager.activate_user_to_patient(token.access_token)
+    user = UserManager.activate_user_to_patient(token.access_token, session=session)
     if user:
         return user
     raise HTTPException(status_code=400, detail="Invalid token")
@@ -109,8 +124,7 @@ async def accept_consent(
     raise HTTPException(status_code=400, detail="Invalid token")
 
 
-# TODO: Questionnaire with assignment status
-@router.get("/{id_patient}/questionnaires", response_model=list[Questionnaire])
+@router.get("/{id_patient}/assignments", response_model=list[Assignment])
 async def get_questionnaires(
     *,
     id_patient,
@@ -137,4 +151,26 @@ async def get_questionnaires(
         ) or UserManager.is_doctor(get_current_patient.user, session=session)
         if not is_user_admin_or_doctor:
             raise HTTPException(status_code=401, detail="Unauthorized")
-    return PatientManager.get_assignemts_questionnaire(id_patient, session=session)
+    return PatientManager.get_assignments(id_patient, session=session)
+
+
+@router.get("/has-assignment/{id_assignment}", response_model=bool)
+async def has_assignment(
+    *, id_assignment: int, get_current_patient: Patient = Depends(get_current_patient)
+):
+    """
+    Check if a current patient has an assignment
+
+    Parameters
+    ----------
+    id_assignment
+        Assignment id
+
+    Returns
+    -------
+    bool
+        True if patient has an assignment
+
+    """
+    ids_assignments = [assignment.id for assignment in get_current_patient.assignments]
+    return id_assignment in ids_assignments
