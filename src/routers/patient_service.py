@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Depends, Body
+from pydantic import EmailStr
 from sqlmodel import Session
 
 from src.classes.patient_manager import PatientManager
@@ -22,7 +23,6 @@ from src.utils.reuse import get_session
 router = APIRouter(prefix="/patient", tags=["patient"])
 
 
-#  Can not put / in the path because it will be interpreted as a path parameter and will not work
 @router.get("/consent")
 async def get_accepted(current_patient: Patient = Depends(get_current_patient)):
     """
@@ -35,6 +35,30 @@ async def get_accepted(current_patient: Patient = Depends(get_current_patient)):
 
     """
     return current_patient.consent if current_patient.consent else False
+
+
+@router.get("/{id_patient}/has-ci-barona")
+async def has_ci_barona(
+    id_patient: EmailStr,
+    current_patient: Patient = Depends(get_current_patient),
+    session: Session = Depends(get_session),
+):
+    """
+    Check if a patient has accepted consent
+
+    Returns
+    -------
+    bool
+        True if patient has accepted consent
+
+
+    """
+    if current_patient.id_user != id_patient:
+        is_user_doc = UserManager.is_doctor(current_patient.user, session=session)
+        if not is_user_doc:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+    patient = PatientManager.get_patient(id_patient, session=session)
+    return patient.has_ci_barona if patient.has_ci_barona else False
 
 
 @router.get("/{id_patient}", response_model=PatientOutput)

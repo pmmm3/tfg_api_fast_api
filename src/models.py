@@ -124,16 +124,19 @@ class Patient(SQLModel, table=True):
     telephone_number: Optional[conint(ge=100000000, le=999999999999)] = Field(
         default=None
     )
-    gender: Optional[str] = Field(default=None)
+    gender: Optional[int] = Field(default=None)
     civil_status: Optional[str] = Field(default=None)
     employment_status: Optional[str] = Field(default=None)
-    education_level: Optional[str] = Field(default=None)
-    region: Optional[str] = Field(default=None)
-    zone: Optional[str] = Field(default=None)
+    education_level: Optional[int] = Field(default=None)
+    region: Optional[int] = Field(default=None)
+    zone: Optional[int] = Field(default=None)
     native_language: Optional[str] = Field(default=None)
     nationality: Optional[str] = Field(default=None)
     birth_date: Optional[datetime] = Field(default=None)
     dni: Optional[str] = Field(default=None)
+
+    ci_barona: Optional[float] = Field(default=None)
+    has_ci_barona: Optional[bool] = Field(default=False)
 
     # If the consent is false, the patient can't be assigned to a questionnaire
     # If the consent is true, the patient can be assigned to a questionnaire and need to have DNI
