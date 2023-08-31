@@ -5,7 +5,7 @@ services:
     build:
       context: .
     ports:
-      - "12000:12000"
+      - "43000:43000"
     depends_on:
       - db
     networks:
@@ -29,7 +29,7 @@ services:
       context: ../tfg_pwa
       dockerfile: Dockerfile
     ports:
-      - "11000:80"
+      - "42000:80"
     networks:
       - networkName
 
