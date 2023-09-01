@@ -91,6 +91,36 @@ async def get_patient(
     return PatientManager.get_patient_output(id_patient, session=session)
 
 
+@router.get("/{id_patient}/ci-barona")
+async def get_ci_barona(
+    id_patient: str,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Get a patient by id
+
+    Parameters
+    ----------
+    id_patient
+        Patient id
+
+    Returns
+    -------
+    Patient
+        Patient object if patient was found
+
+    """
+    #     Check user is admin or patient
+    if current_user.email != id_patient:
+        is_user_admin = UserManager.is_admin(
+            current_user, session=session
+        ) or UserManager.is_doctor(current_user, session=session)
+        if not is_user_admin:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+    return PatientManager.get_ci_barona(id_patient, session=session)
+
+
 @router.post("/activate")
 async def activate(token: Token, *, session: Session = Depends(get_session)):
     """
