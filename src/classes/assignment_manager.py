@@ -1,15 +1,8 @@
 from pydantic import EmailStr
 from sqlmodel import Session, SQLModel
 
-from src.models import (
-    Assignment,
-    Questionnaire,
-    Patient,
-    Doctor,
-    Answer,
-    Module,
-    OptionAnswer,
-)
+
+from src.models import Assignment, Questionnaire, Patient, Doctor
 
 
 class AssignmentInput(SQLModel):
@@ -54,20 +47,32 @@ class AssignmentManager:
         return assignment
 
     @classmethod
-    def save_answers(
-        cls,
-        assignment: Assignment,
-        answers: Answer,
-        module: Module,
-        option: OptionAnswer,
-        open_text: str,
-        session: Session,
-    ):
-        pass
-        # TODO: save answers
-        # if option:
-        #     answer = AnswerManager(assignment=assignment, module=module, option=option)
-        # else:
-        #     answer = AnswerManager(
-        #         assignment=assignment, module=module, open_text=open_text
-        #     )
+    def finish_assignment(cls, assignment: Assignment, session: Session) -> Assignment:
+        # Check if all modules are finished
+        from src.classes.answer_manager import AnswerManager
+
+        questions_answered = []
+        for answer in assignment.answers:
+            answer_bd = AnswerManager.get_answer(
+                answer.id_assignment,
+                answer.id_question_module_id,
+                answer.id_question_question_id,
+                session=session,
+            )
+            if answer_bd:
+                questions_answered.append(answer_bd.id_question_question_id)
+
+        for module in assignment.questionnaire.modules:
+            all_questions_per_module = [questions.id for questions in module.questions]
+
+            if not all(
+                questions in questions_answered
+                for questions in all_questions_per_module
+            ):
+                raise Exception("Not all questions are answered")
+
+        assignment.status = "finished"
+        session.add(assignment)
+        session.commit()
+        session.refresh(assignment)
+        return assignment

@@ -5,10 +5,11 @@ from src.classes.doctor_manager import DoctorManager
 from src.classes.patient_manager import PatientManager
 from src.classes.questionnaire_manager import QuestionnaireManager
 from src.classes.user_manager import UserManager
-from src.models import User
+from src.models import User, Patient
 from src.utils.authorization import (
     is_doctor_or_admin,
     get_current_user,
+    get_current_patient,
 )
 from src.utils.reuse import get_session
 
@@ -80,3 +81,30 @@ async def get_assignment(
 
             raise HTTPException(status_code=401, detail="Unauthorized")
     return AssignmentManager.get_assignment(id_assignment, session=session)
+
+
+@router.put("/{id_assignment}/finish")
+async def finish_assignment(
+    id_assignment: int,
+    session=Depends(get_session),
+    current_patient: Patient = Depends(get_current_patient),
+):
+    """
+    Finish an assignment by id
+    """
+    assignment = AssignmentManager.get_assignment(id_assignment, session=session)
+    if assignment.patient.id_user != current_patient.id_user:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    # Check if the assignment is already finished
+    if assignment.status == "finished":
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=400, detail="Assignment already finished")
+    try:
+        AssignmentManager.finish_assignment(assignment, session=session)
+    except Exception as e:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=400, detail=str(e))

@@ -22,6 +22,7 @@ class StatusQuestionnaire(str, Enum):
     draft = "draft"
     published = "published"
     archived = "archived"
+    finished = "finished"
 
 
 class StatusUser(str, Enum):
