@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends, Body
 from pydantic import EmailStr
 from sqlmodel import Session
 
+from src.classes.assignment_manager import AssignmentManager
 from src.classes.patient_manager import PatientManager
 from src.classes.user_manager import UserManager
 from src.models import (
@@ -188,7 +189,7 @@ async def calculate_barona(
 async def get_questionnaires(
     *,
     id_patient,
-    get_current_patient: Patient = Depends(get_current_patient),
+    get_current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
@@ -205,10 +206,10 @@ async def get_questionnaires(
 
     """
     #     Check user is admin or patient
-    if get_current_patient.id_user != id_patient:
+    if get_current_user.email != id_patient:
         is_user_admin_or_doctor = UserManager.is_admin(
-            get_current_patient.user, session=session
-        ) or UserManager.is_doctor(get_current_patient.user, session=session)
+            get_current_user, session=session
+        ) or UserManager.is_doctor(get_current_user, session=session)
         if not is_user_admin_or_doctor:
             raise HTTPException(status_code=401, detail="Unauthorized")
     return PatientManager.get_assignments(id_patient, session=session)
@@ -216,7 +217,10 @@ async def get_questionnaires(
 
 @router.get("/has-assignment/{id_assignment}", response_model=bool)
 async def has_assignment(
-    *, id_assignment: int, get_current_patient: Patient = Depends(get_current_patient)
+    *,
+    id_assignment: int,
+    get_current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
 ):
     """
     Check if a current patient has an assignment
@@ -232,5 +236,16 @@ async def has_assignment(
         True if patient has an assignment
 
     """
-    ids_assignments = [assignment.id for assignment in get_current_patient.assignments]
-    return id_assignment in ids_assignments
+    is_doctor = UserManager.is_doctor(get_current_user, session=session)
+    is_patient = UserManager.is_patient(get_current_user, session=session)
+
+    if not is_doctor and not is_patient:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    assignment = AssignmentManager.get_assignment(id_assignment, session=session)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    if is_doctor and assignment.doctor.id_user != get_current_user.email:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if is_patient and assignment.patient.id_user != get_current_user.email:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return True
