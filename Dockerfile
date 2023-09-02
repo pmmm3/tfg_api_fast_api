@@ -7,12 +7,9 @@ COPY . /api
 # Directorio de trabajo
 WORKDIR /api
 
-# Instalar Mamba
-RUN conda install -n base -c conda-forge mamba
-
-# Crear y activar el entorno Conda con Mamba
+# Crear y activar el entorno
 COPY environment.yml .
-RUN mamba env create -f environment.yml
+RUN conda env create -f environment.yml
 SHELL ["conda", "run", "-n", "tfg-api", "/bin/bash", "-c"]
 
 # Exponer el puerto
