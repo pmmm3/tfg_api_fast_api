@@ -212,7 +212,7 @@ def upgrade() -> None:
             ["id_question_question_id", "id_question_module_id"],
             ["question.id", "question.id_module"],
         ),
-        sa.PrimaryKeyConstraint("id"),
+        sa.PrimaryKeyConstraint("id", name="pk_answer"),
     )
     # ### end Alembic commands ###
 

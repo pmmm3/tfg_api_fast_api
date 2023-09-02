@@ -27,6 +27,7 @@ def upgrade() -> None:
     op.alter_column(
         "answer", "id_question_module_id", existing_type=sa.INTEGER(), nullable=False
     )
+    op.drop_constraint("pk_answer", "answer", type_="primary")
 
     op.create_primary_key(
         "pk_answer",
@@ -34,7 +35,6 @@ def upgrade() -> None:
         ["id_assignment", "id_question_question_id", "id_question_module_id"],
     )
     op.drop_column("answer", "id")
-    # ### end Alembic commands ###
 
 
 def downgrade() -> None:
