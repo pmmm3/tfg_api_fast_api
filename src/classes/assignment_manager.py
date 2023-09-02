@@ -83,18 +83,21 @@ class AssignmentManager:
 
             diagnostic = []
             observations = []
+            punctuation = AnswerManager.get_punctuation_per_module(
+                assignment.id, module.id, session=session
+            )
             # Get diagnostic
             if module.outputs:
-                punctuation = AnswerManager.get_punctuation_per_module(
-                    assignment.id, module.id, session=session
-                )
+                module_outputs = []
                 for output in module.outputs:
                     if get_operation(
                         output.condition_type,
                         output.condition_value,
                         punctuation,
                     ):
-                        diagnostic.append(output.text)
+                        module_outputs.append(output.text)
+                diagnostic.append(module_outputs)
+            total_diagnostic = {"punctuation": punctuation, "diagnostic": diagnostic}
             # Get observations
             for question in module.questions:
                 if question.outputs:
@@ -109,14 +112,14 @@ class AssignmentManager:
                                 answer.option.score,
                             ):
                                 observations.append(output.text)
-            if observations or diagnostic:
-                resume.append(
-                    {
-                        "module": module.title,
-                        "diagnostic": diagnostic,
-                        "observations": observations,
-                    }
-                )
+
+            resume.append(
+                {
+                    "module": module.title,
+                    "diagnostic": total_diagnostic,
+                    "observations": observations,
+                }
+            )
         return resume
 
 
