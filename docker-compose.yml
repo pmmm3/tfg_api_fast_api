@@ -20,7 +20,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_DEFAULT_DB}
     ports:
-      - "5432:5432"
+      - "54320:5432"
     networks:
       - networkName
 
