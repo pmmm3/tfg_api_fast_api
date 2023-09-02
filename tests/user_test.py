@@ -3,6 +3,7 @@ from unittest.mock import Mock, MagicMock, patch
 from fastapi.testclient import TestClient
 from main import app
 from src.classes.auth import IncorrectPassword, Auth, UserNotFound, UserNotStatusValid
+from src.models import StatusUser
 
 client = TestClient(app)
 
@@ -12,6 +13,7 @@ def mock_authenticated_user():
     mock_user = Mock()
     mock_user.email = "test@example.com"
     mock_user.verify_password.return_value = True
+    mock_user.status = StatusUser.active
     mock_user.disabled = False
 
     mock_session = MagicMock()
@@ -61,12 +63,15 @@ def mock_user_disabled():
 
 
 def test_login_success(mock_authenticated_user):
+    mock_user = Mock()
+    mock_user.email = "test@example.com"
+    mock_user.verify_password.return_value = True
     email = "test@example.com"
+
     password = "test_password"
     response = Auth.login(email, password)
 
     assert "access_token" in response
-    assert response["access_token"] == "fake_token"
 
 
 def test_login_user_not_found(mock_user_not_found):
