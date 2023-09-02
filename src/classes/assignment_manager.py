@@ -1,8 +1,6 @@
 from pydantic import EmailStr
 from sqlmodel import Session, SQLModel
-
-
-from src.models import Assignment, Questionnaire, Patient, Doctor
+from src.models import Assignment, Questionnaire, Patient, Doctor, TypeCondition
 
 
 class AssignmentInput(SQLModel):
@@ -76,3 +74,64 @@ class AssignmentManager:
         session.commit()
         session.refresh(assignment)
         return assignment
+
+    @classmethod
+    def get_assignment_analytics(cls, assignment, session):
+        resume = []
+        for module in assignment.questionnaire.modules:
+            from src.classes.answer_manager import AnswerManager
+
+            diagnostic = []
+            observations = []
+            # Get diagnostic
+            if module.outputs:
+                punctuation = AnswerManager.get_punctuation_per_module(
+                    assignment.id, module.id, session=session
+                )
+                for output in module.outputs:
+                    if get_operation(
+                        output.condition_type,
+                        output.condition_value,
+                        punctuation,
+                    ):
+                        diagnostic.append(output.text)
+            # Get observations
+            for question in module.questions:
+                if question.outputs:
+                    answer = AnswerManager.get_answer(
+                        assignment.id, module.id, question.id, session=session
+                    )
+                    if answer:
+                        for output in question.outputs:
+                            if get_operation(
+                                output.condition_type,
+                                output.condition_value,
+                                answer.option.score,
+                            ):
+                                observations.append(output.text)
+            if observations or diagnostic:
+                resume.append(
+                    {
+                        "module": module.title,
+                        "diagnostic": diagnostic,
+                        "observations": observations,
+                    }
+                )
+        return resume
+
+
+def get_operation(type: TypeCondition, expected_value: int, actual_value: int) -> bool:
+    if type == TypeCondition.GREATER:
+        return actual_value > expected_value
+    elif type == TypeCondition.GREATER_EQUAL:
+        return actual_value >= expected_value
+    elif type == TypeCondition.LESS:
+        return actual_value < expected_value
+    elif type == TypeCondition.LESS_EQUAL:
+        return actual_value <= expected_value
+    elif type == TypeCondition.EQUAL:
+        return actual_value == expected_value
+    elif type == TypeCondition.NOT_EQUAL:
+        return actual_value != expected_value
+    else:
+        raise Exception("Invalid type")

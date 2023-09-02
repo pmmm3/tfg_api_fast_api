@@ -5,11 +5,12 @@ from src.classes.doctor_manager import DoctorManager
 from src.classes.patient_manager import PatientManager
 from src.classes.questionnaire_manager import QuestionnaireManager
 from src.classes.user_manager import UserManager
-from src.models import User, Patient
+from src.models import User, Patient, Doctor
 from src.utils.authorization import (
     is_doctor_or_admin,
     get_current_user,
     get_current_patient,
+    get_current_doctor,
 )
 from src.utils.reuse import get_session
 
@@ -108,3 +109,24 @@ async def finish_assignment(
         from fastapi import HTTPException
 
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/{id_assignment}/analytics")
+async def get_assignment_analitics(
+    id_assignment: int,
+    get_current_doctor: Doctor = Depends(get_current_doctor),
+    session=Depends(get_session),
+):
+    """
+    Get an assignment analitics by id
+    """
+    assignment = AssignmentManager.get_assignment(id_assignment, session=session)
+    if not assignment:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    if assignment.doctor.id_user != get_current_doctor.id_user:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return AssignmentManager.get_assignment_analytics(assignment, session=session)

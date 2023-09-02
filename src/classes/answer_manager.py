@@ -41,3 +41,18 @@ class AnswerManager:
         session.commit()
         session.refresh(answer)
         return answer
+
+    @classmethod
+    def get_punctuation_per_module(
+        cls, id_assignment: int, id_module: int, session: Session
+    ):
+        answers = session.exec(
+            select(Answer)
+            .where(Answer.id_assignment == id_assignment)
+            .where(Answer.id_question_module_id == id_module)
+        ).all()
+        punctuation = 0
+        for answer in answers:
+            if answer.id_option:
+                punctuation += answer.option.score
+        return punctuation
